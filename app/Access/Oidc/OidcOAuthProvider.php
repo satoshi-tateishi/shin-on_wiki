@@ -22,6 +22,7 @@ class OidcOAuthProvider extends AbstractProvider
 
     protected string $authorizationEndpoint;
     protected string $tokenEndpoint;
+    protected ?string $domain = null;
 
     /**
      * Scopes to use for the OIDC authorization call.
@@ -88,6 +89,13 @@ class OidcOAuthProvider extends AbstractProvider
     protected function checkResponse(ResponseInterface $response, $data): void
     {
         if ($response->getStatusCode() >= 400 || isset($data['error'])) {
+            \Log::error('OIDC: Token endpoint error', [
+                'status' => $response->getStatusCode(),
+                'error' => $data['error'] ?? $response->getReasonPhrase(),
+                'error_description' => $data['error_description'] ?? null,
+                'response_body' => (string) $response->getBody(),
+            ]);
+
             throw new IdentityProviderException(
                 $data['error'] ?? $response->getReasonPhrase(),
                 $response->getStatusCode(),
@@ -123,5 +131,32 @@ class OidcOAuthProvider extends AbstractProvider
     protected function getPkceMethod(): string
     {
         return static::PKCE_METHOD_S256;
+    }
+
+    /**
+     * Set the LINE WORKS domain for authentication.
+     * Required for LINE WORKS SSO functionality.
+     */
+    public function setDomain(?string $domain): void
+    {
+        $this->domain = $domain;
+    }
+
+    /**
+     * Override to add LINE WORKS specific 'domain' parameter to token request.
+     * LINE WORKS requires the 'domain' parameter when SSO functionality is used.
+     */
+    protected function getAccessTokenRequest(array $params)
+    {
+        // Add LINE WORKS domain parameter if set
+        if ($this->domain) {
+            $params['domain'] = $this->domain;
+            \Log::info('OIDC: Adding domain parameter to token request', [
+                'domain' => $this->domain,
+                'all_params' => array_keys($params),
+            ]);
+        }
+
+        return parent::getAccessTokenRequest($params);
     }
 }

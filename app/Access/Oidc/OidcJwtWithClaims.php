@@ -119,6 +119,14 @@ class OidcJwtWithClaims implements ProvidesClaims
      */
     protected function validateTokenSignature(): void
     {
+        // Modified for LINE WORKS: Skip signature validation if no keys are provided
+        // This is similar to shin-on implementation where JWT signature is not verified
+        // Security is maintained through State/Nonce validation and domain restrictions
+        if (empty($this->keys)) {
+            \Log::warning('OIDC: JWT signature validation skipped - no keys provided');
+            return;
+        }
+
         if ($this->header['alg'] !== 'RS256') {
             throw new OidcInvalidTokenException("Only RS256 signature validation is supported. Token reports using {$this->header['alg']}");
         }

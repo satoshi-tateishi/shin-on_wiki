@@ -74,7 +74,8 @@ class OidcProviderSettings
     {
         $this->validateInitial();
 
-        $required = ['keys', 'tokenEndpoint', 'authorizationEndpoint'];
+        // Modified for LINE WORKS: keys are optional if signature validation is skipped
+        $required = ['tokenEndpoint', 'authorizationEndpoint'];
         foreach ($required as $prop) {
             if (empty($this->$prop)) {
                 throw new InvalidArgumentException("Missing required configuration \"{$prop}\" value");

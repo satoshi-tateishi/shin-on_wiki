@@ -14,7 +14,7 @@ use BookStack\Theming\ThemeEvents;
 use BookStack\Uploads\UserAvatars;
 use BookStack\Users\Models\User;
 use Illuminate\Support\Facades\Cache;
-use League\OAuth2\Client\OptionProvider\HttpBasicAuthOptionProvider;
+use League\OAuth2\Client\OptionProvider\PostAuthOptionProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 
 /**
@@ -75,9 +75,15 @@ class OidcService
         $provider->setPkceCode($pkceCode);
 
         // Try to exchange authorization code for access token
-        $accessToken = $provider->getAccessToken('authorization_code', [
-            'code' => $authorizationCode,
-        ]);
+        // Add LINE WORKS domain parameter if set
+        $tokenOptions = ['code' => $authorizationCode];
+        $domain = env('LINEWORKS_DOMAIN');
+        if ($domain) {
+            $tokenOptions['domain'] = $domain;
+            \Log::info('OIDC: Adding domain to token request options', ['domain' => $domain]);
+        }
+
+        $accessToken = $provider->getAccessToken('authorization_code', $tokenOptions);
 
         return $this->processAccessTokenCallback($accessToken, $settings);
     }
@@ -135,11 +141,18 @@ class OidcService
             'redirectUri' => url('/oidc/callback'),
         ], [
             'httpClient'     => $this->http->buildClient(5),
-            'optionProvider' => new HttpBasicAuthOptionProvider(),
+            'optionProvider' => new PostAuthOptionProvider(),
         ]);
 
         foreach ($this->getAdditionalScopes() as $scope) {
             $provider->addScope($scope);
+        }
+
+        // Set LINE WORKS domain for SSO functionality
+        $domain = env('LINEWORKS_DOMAIN');
+        if ($domain) {
+            $provider->setDomain($domain);
+            \Log::info('OIDC: Setting LINE WORKS domain', ['domain' => $domain]);
         }
 
         return $provider;
@@ -203,6 +216,10 @@ class OidcService
         if (empty($userDetails->email)) {
             throw new OidcException(trans('errors.oidc_no_email_address'));
         }
+
+        // Modified for LINE WORKS: Validate email domain (shin-on1981 only)
+        $this->validateUserDomain($userDetails->email);
+
         if (empty($userDetails->name)) {
             $userDetails->name = $userDetails->externalId;
         }
@@ -315,5 +332,36 @@ class OidcService
         $joiner = str_contains($oidcSettings->endSessionEndpoint, '?') ? '&' : '?';
 
         return $oidcSettings->endSessionEndpoint . $joiner . http_build_query($endpointParams);
+    }
+
+    /**
+     * Validate user email domain for LINE WORKS.
+     * Only allows users from the shin-on1981 domain.
+     * Similar to shin-on implementation.
+     *
+     * @throws OidcException
+     */
+    protected function validateUserDomain(string $email): void
+    {
+        $allowedDomain = env('LINEWORKS_DOMAIN', 'shin-on1981');
+
+        // Extract domain from email (part after @)
+        $emailDomain = substr(strrchr($email, '@'), 1);
+
+        \Log::info('OIDC: Email domain validation', [
+            'email' => $email,
+            'domain' => $emailDomain,
+            'allowed' => $allowedDomain,
+        ]);
+
+        if ($emailDomain !== $allowedDomain) {
+            \Log::warning('OIDC: Domain validation failed', [
+                'expected' => $allowedDomain,
+                'got' => $emailDomain,
+            ]);
+            throw new OidcException("Access denied: Only users from {$allowedDomain} domain are allowed.");
+        }
+
+        \Log::info('OIDC: Domain validation passed');
     }
 }

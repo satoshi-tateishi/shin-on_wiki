@@ -33,3 +33,9 @@ phpstan.neon
 esbuild-meta.json
 .phpactor.json
 /*.zip
+
+# Claude Code - SSL Certificates
+claude/certs/
+*.pem
+*.key
+*.crt
