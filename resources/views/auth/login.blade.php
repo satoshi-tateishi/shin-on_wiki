@@ -2,12 +2,20 @@
 
 @section('content')
 
+<style>
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+</style>
+
     <div class="container very-small">
 
         <div class="my-l">&nbsp;</div>
 
-        <div class="card content-wrap auto-height">
+        <div class="card content-wrap auto-height" style="display: flex; align-items: center; justify-content: center; padding: 30px 60px;">
+            {{-- ログイン見出しを削除
             <h1 class="list-heading">{{ Str::title(trans('auth.log_in')) }}</h1>
+            --}}
 
             @include('auth.parts.login-message')
 
