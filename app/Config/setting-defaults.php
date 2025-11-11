@@ -10,7 +10,7 @@
 
 return [
 
-    'app-name'             => 'BookStack',
+    'app-name'             => 'shin·on Wiki by BookStack',
     'app-logo'             => '',
     'app-name-header'      => true,
     'app-editor'           => 'wysiwyg',

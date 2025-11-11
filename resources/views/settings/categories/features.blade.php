@@ -8,7 +8,7 @@
 
         <div class="setting-list">
 
-
+            {{-- パブリック・アクセス設定をコメントアウト
             <div class="grid half gap-xl">
                 <div>
                     <label for="setting-app-public" class="setting-list-label">{{ trans('settings.app_public_access') }}</label>
@@ -27,6 +27,7 @@
                     ])
                 </div>
             </div>
+            --}}
 
             <div class="grid half gap-xl">
                 <div>

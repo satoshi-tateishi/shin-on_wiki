@@ -18,6 +18,7 @@
 
             <div class="setting-list">
 
+                {{-- 名前フィールド（コメントアウト）
                 <div class="flex-container-row gap-l items-center wrap">
                     <div class="flex">
                         <label class="setting-list-label" for="name">{{ trans('auth.name') }}</label>
@@ -27,7 +28,9 @@
                         @include('form.text', ['name' => 'name'])
                     </div>
                 </div>
+                --}}
 
+                {{-- メールアドレスフィールド（コメントアウト）
                 <div>
                     <div class="flex-container-row gap-l items-center wrap">
                         <div class="flex">
@@ -42,33 +45,16 @@
                         <p class="text-small text-muted">{{ trans('preferences.profile_email_no_permission') }}</p>
                     @endif
                 </div>
-
-                <div class="grid half gap-xl">
-                    <div>
-                        <label for="user-avatar"
-                               class="setting-list-label">{{ trans('settings.users_avatar') }}</label>
-                        <p class="text-small">{{ trans('preferences.profile_avatar_desc') }}</p>
-                    </div>
-                    <div>
-                        @include('form.image-picker', [
-                            'resizeHeight' => '512',
-                            'resizeWidth' => '512',
-                            'showRemove' => false,
-                            'defaultImage' => url('/user_avatar.png'),
-                            'currentImage' => user()->getAvatar(80),
-                            'currentId' => user()->image_id,
-                            'name' => 'profile_image',
-                            'imageClass' => 'avatar large'
-                        ])
-                    </div>
-                </div>
+                --}}
 
                 @include('users.parts.language-option-row', ['value' => old('language') ?? user()->getLocale()->appLocale()])
 
             </div>
 
             <div class="form-group text-right">
+                {{-- アカウント削除ボタン（コメントアウト）
                 <a href="{{ url('/my-account/delete') }}" class="button outline">{{ trans('preferences.delete_account') }}</a>
+                --}}
                 <button class="button">{{ trans('common.save') }}</button>
             </div>
 

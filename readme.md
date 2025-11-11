@@ -1,6 +1,6 @@
-# shin-on_wiki - BookStack × LINE WORKS SSO
+# shin·on Wiki by BookStack - LINE WORKS SSO統合
 
-BookStackにLINE WORKS SSO認証を統合したWikiシステムです。
+BookStackをベースにLINE WORKS SSO認証を統合したWikiシステムです。
 
 > 📖 **オリジナルのBookStack READMEは [README_BOOKSTACK_ORIGINAL.md](./README_BOOKSTACK_ORIGINAL.md) に保存されています。**
 

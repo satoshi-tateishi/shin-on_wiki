@@ -14,15 +14,16 @@
     <div class="grid half mt-m gap-xl mb-l">
         <div>
             <label for="name">{{ trans('auth.name') }}</label>
-            @include('form.text', ['name' => 'name'])
+            @include('form.text', ['name' => 'name', 'disabled' => true])
         </div>
         <div>
             @if($authMethod !== 'ldap' || userCan(\BookStack\Permissions\Permission::UsersManage))
                 <label for="email">{{ trans('auth.email') }}</label>
-                @include('form.text', ['name' => 'email', 'disabled' => !userCan(\BookStack\Permissions\Permission::UsersManage)])
+                @include('form.text', ['name' => 'email', 'disabled' => true])
             @endif
         </div>
     </div>
+    {{-- 外部認証IDセクションをコメントアウト
     <div>
         <div class="form-group collapsible mb-none" component="collapsible" id="external-auth-field">
             <button refs="collapsible@trigger" type="button" class="collapse-title text-link" aria-expanded="false">
@@ -34,6 +35,7 @@
             </div>
         </div>
     </div>
+    --}}
 </div>
 
 <div>

@@ -18,7 +18,7 @@ return [
 
     'name' => '名前',
     'username' => 'ユーザ名',
-    'email' => 'メールアドレス',
+    'email' => 'LINE WORKS ID',
     'password' => 'パスワード',
     'password_confirm' => 'パスワード (確認)',
     'password_hint' => '8文字以上で設定する必要があります',

@@ -16,8 +16,10 @@
 
                 <div class="form-group text-right">
                     <a href="{{ url("/settings/roles") }}" class="button outline">{{ trans('common.cancel') }}</a>
+                    {{-- コピーと役割を削除ボタンを非表示
                     <a href="{{ url("/settings/roles/new?copy_from={$role->id}") }}" class="button outline">{{ trans('common.copy') }}</a>
                     <a href="{{ url("/settings/roles/delete/{$role->id}") }}" class="button outline">{{ trans('settings.role_delete') }}</a>
+                    --}}
                     <button type="submit" class="button">{{ trans('settings.role_save') }}</button>
                 </div>
             </form>
@@ -32,7 +34,9 @@
                     @foreach($role->users as $user)
                         <div class="user-list-item">
                             <div>
+                                {{-- アバター画像を非表示
                                 <img class="avatar small" src="{{ $user->getAvatar(40) }}" alt="{{ $user->name }}">
+                                --}}
                             </div>
                             <div>
                                 @if(userCan(\BookStack\Permissions\Permission::UsersManage) || user()->id == $user->id)

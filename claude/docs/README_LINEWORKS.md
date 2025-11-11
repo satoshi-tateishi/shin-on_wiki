@@ -1,6 +1,6 @@
-# BookStack × LINE WORKS SSO 統合
+# shin·on Wiki by BookStack - LINE WORKS SSO 統合
 
-このプロジェクトは、BookStackにLINE WORKS SSO認証を統合したものです。
+このプロジェクトは、BookStackをベースにLINE WORKS SSO認証を統合したものです。
 
 ## クイックスタート
 

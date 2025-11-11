@@ -7,22 +7,26 @@
         <div>
             <div class="form-group">
                 <label for="display_name">{{ trans('settings.role_name') }}</label>
-                @include('form.text', ['name' => 'display_name', 'model' => $role])
+                @include('form.text', ['name' => 'display_name', 'model' => $role, 'disabled' => true])
             </div>
             <div class="form-group">
                 <label for="description">{{ trans('settings.role_desc') }}</label>
                 @include('form.text', ['name' => 'description', 'model' => $role])
             </div>
+            {{-- 多要素認証チェックボックスをコメントアウト
             <div class="form-group">
                 @include('form.checkbox', ['name' => 'mfa_enforced', 'label' => trans('settings.role_mfa_enforced'), 'model' => $role ])
             </div>
+            --}}
 
+            {{-- 外部認証IDフィールドをコメントアウト
             @if(in_array(config('auth.method'), ['ldap', 'saml2', 'oidc']))
                 <div class="form-group">
                     <label for="name">{{ trans('settings.role_external_auth_id') }}</label>
                     @include('form.text', ['name' => 'external_auth_id', 'model' => $role])
                 </div>
             @endif
+            --}}
         </div>
     </div>
 

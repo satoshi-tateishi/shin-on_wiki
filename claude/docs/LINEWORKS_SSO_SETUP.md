@@ -1,8 +1,8 @@
-# BookStack × LINE WORKS SSO 認証 実装ドキュメント
+# shin·on Wiki by BookStack - LINE WORKS SSO 認証 実装ドキュメント
 
 ## 概要
 
-BookStackにLINE WORKS SSO（OAuth 2.0 + OpenID Connect）認証を実装しました。
+shin·on Wiki by BookStack (BookStackベース) にLINE WORKS SSO（OAuth 2.0 + OpenID Connect）認証を実装しました。
 shin-on1981ドメインのユーザーのみがログインできるようにセキュリティ制限を実装しています。
 
 ## 実装した機能

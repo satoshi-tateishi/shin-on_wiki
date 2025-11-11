@@ -11,9 +11,11 @@
             <div class="grid half v-center">
                 <h1 class="list-heading">{{ trans('settings.role_user_roles') }}</h1>
 
+                {{-- 役割を作成ボタンをコメントアウト
                 <div class="text-right">
                     <a href="{{ url("/settings/roles/new") }}" class="button outline my-none">{{ trans('settings.role_create') }}</a>
                 </div>
+                --}}
             </div>
 
             <p class="text-muted">{{ trans('settings.roles_index_desc') }}</p>
@@ -37,7 +39,10 @@
 
             <div class="item-list">
                 @foreach($roles as $role)
-                    @include('settings.roles.parts.roles-list-item', ['role' => $role])
+                    {{-- Public役割を非表示 --}}
+                    @if($role->system_name !== 'public')
+                        @include('settings.roles.parts.roles-list-item', ['role' => $role])
+                    @endif
                 @endforeach
             </div>
 

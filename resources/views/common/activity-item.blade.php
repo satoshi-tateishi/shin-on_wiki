@@ -3,12 +3,6 @@
 
 <div>
     @if($activity->user)
-    <img class="avatar" src="{{ $activity->user->getAvatar(30) }}" alt="{{ $activity->user->name }}">
-    @endif
-</div>
-
-<div>
-    @if($activity->user)
         <a href="{{ $activity->user->getProfileUrl() }}">{{ $activity->user->name }}</a>
     @else
         {{ trans('common.deleted_user') }}

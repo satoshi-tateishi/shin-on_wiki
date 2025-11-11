@@ -1,7 +1,7 @@
 <?php
 /**
  * Settings text strings
- * Contains all text strings used in the general settings sections of BookStack
+ * Contains all text strings used in the general settings sections of shin·on Wiki by BookStack
  * including users and roles.
  */
 return [
@@ -19,7 +19,7 @@ return [
     'app_name_desc' => 'This name is shown in the header and in any system-sent emails.',
     'app_name_header' => 'Show name in header',
     'app_public_access' => 'Public Access',
-    'app_public_access_desc' => 'Enabling this option will allow visitors, that are not logged-in, to access content in your BookStack instance.',
+    'app_public_access_desc' => 'Enabling this option will allow visitors, that are not logged-in, to access content in your shin·on Wiki by BookStack instance.',
     'app_public_access_desc_guest' => 'Access for public visitors can be controlled through the "Guest" user.',
     'app_public_access_toggle' => 'Allow public access',
     'app_public_viewing' => 'Allow public viewing?',
@@ -215,7 +215,7 @@ return [
     'users_search' => 'Search Users',
     'users_latest_activity' => 'Latest Activity',
     'users_details' => 'User Details',
-    'users_details_desc' => 'Set a display name and an email address for this user. The email address will be used for logging into the application.',
+    'users_details_desc' => 'Set a display name and a LINE WORKS ID for this user. The LINE WORKS ID will be used for logging into the application.',
     'users_details_desc_no_email' => 'Set a display name for this user so others can recognise them.',
     'users_role' => 'User Roles',
     'users_role_desc' => 'Select which roles this user will be assigned to. If a user is assigned to multiple roles the permissions from those roles will stack and they will receive all abilities of the assigned roles.',
@@ -224,7 +224,7 @@ return [
     'users_send_invite_text' => 'You can choose to send this user an invitation email which allows them to set their own password otherwise you can set their password yourself.',
     'users_send_invite_option' => 'Send user invite email',
     'users_external_auth_id' => 'External Authentication ID',
-    'users_external_auth_id_desc' => 'When an external authentication system is in use (such as SAML2, OIDC or LDAP) this is the ID which links this BookStack user to the authentication system account. You can ignore this field if using the default email-based authentication.',
+    'users_external_auth_id_desc' => 'When an external authentication system is in use (such as SAML2, OIDC or LDAP) this is the ID which links this shin·on Wiki by BookStack user to the authentication system account. You can ignore this field if using the default email-based authentication.',
     'users_password_warning' => 'Only fill the below if you would like to change the password for this user.',
     'users_system_public' => 'This user represents any guest users that visit your instance. It cannot be used to log in but is assigned automatically.',
     'users_delete' => 'Delete User',
@@ -250,7 +250,7 @@ return [
     'users_social_connected' => ':socialAccount account was successfully attached to your profile.',
     'users_social_disconnected' => ':socialAccount account was successfully disconnected from your profile.',
     'users_api_tokens' => 'API Tokens',
-    'users_api_tokens_desc' => 'Create and manage the access tokens used to authenticate with the BookStack REST API. Permissions for the API are managed via the user that the token belongs to.',
+    'users_api_tokens_desc' => 'Create and manage the access tokens used to authenticate with the shin·on Wiki by BookStack REST API. Permissions for the API are managed via the user that the token belongs to.',
     'users_api_tokens_none' => 'No API tokens have been created for this user',
     'users_api_tokens_create' => 'Create Token',
     'users_api_tokens_expires' => 'Expires',
@@ -309,8 +309,8 @@ return [
 
     // Licensing
     'licenses' => 'Licenses',
-    'licenses_desc' => 'This page details license information for BookStack in addition to the projects & libraries that are used within BookStack. Many projects listed may only be used in a development context.',
-    'licenses_bookstack' => 'BookStack License',
+    'licenses_desc' => 'This page details license information for shin·on Wiki by BookStack in addition to the projects & libraries that are used within BookStack. Many projects listed may only be used in a development context.',
+    'licenses_bookstack' => 'shin·on Wiki by BookStack License',
     'licenses_php' => 'PHP Library Licenses',
     'licenses_js' => 'JavaScript Library Licenses',
     'licenses_other' => 'Other Licenses',
@@ -321,50 +321,7 @@ return [
     //!////////////////////////////////
     'language_select' => [
         'en' => 'English',
-        'ar' => 'العربية',
-        'bg' => 'Bǎlgarski',
-        'bs' => 'Bosanski',
-        'ca' => 'Català',
-        'cs' => 'Česky',
-        'cy' => 'Cymraeg',
-        'da' => 'Dansk',
-        'de' => 'Deutsch (Sie)',
-        'de_informal' => 'Deutsch (Du)',
-        'el' => 'ελληνικά',
-        'es' => 'Español',
-        'es_AR' => 'Español Argentina',
-        'et' => 'Eesti keel',
-        'eu' => 'Euskara',
-        'fa' => 'فارسی',
-        'fi' => 'Suomi',
-        'fr' => 'Français',
-        'he' => 'עברית',
-        'hr' => 'Hrvatski',
-        'hu' => 'Magyar',
-        'id' => 'Bahasa Indonesia',
-        'it' => 'Italian',
         'ja' => '日本語',
-        'ko' => '한국어',
-        'lt' => 'Lietuvių Kalba',
-        'lv' => 'Latviešu Valoda',
-        'nb' => 'Norsk (Bokmål)',
-        'ne' => 'नेपाली',
-        'nn' => 'Nynorsk',
-        'nl' => 'Nederlands',
-        'pl' => 'Polski',
-        'pt' => 'Português',
-        'pt_BR' => 'Português do Brasil',
-        'ro' => 'Română',
-        'ru' => 'Русский',
-        'sk' => 'Slovensky',
-        'sl' => 'Slovenščina',
-        'sv' => 'Svenska',
-        'tr' => 'Türkçe',
-        'uk' => 'Українська',
-        'uz' => 'O‘zbekcha',
-        'vi' => 'Tiếng Việt',
-        'zh_CN' => '简体中文',
-        'zh_TW' => '繁體中文',
     ],
     //!////////////////////////////////
 ];

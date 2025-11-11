@@ -18,7 +18,7 @@ return [
 
     'name' => 'Name',
     'username' => 'Username',
-    'email' => 'Email',
+    'email' => 'LINE WORKS ID',
     'password' => 'Password',
     'password_confirm' => 'Confirm Password',
     'password_hint' => 'Must be at least 8 characters',

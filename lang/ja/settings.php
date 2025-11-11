@@ -1,7 +1,7 @@
 <?php
 /**
  * Settings text strings
- * Contains all text strings used in the general settings sections of BookStack
+ * Contains all text strings used in the general settings sections of shin·on Wiki by BookStack
  * including users and roles.
  */
 return [
@@ -19,7 +19,7 @@ return [
     'app_name_desc' => 'この名前はヘッダーやEメール内で表示されます。',
     'app_name_header' => 'ヘッダーにアプリケーション名を表示する',
     'app_public_access' => 'パブリック・アクセス',
-    'app_public_access_desc' => 'このオプションを有効にすると、ログインしていない訪問者があなたのBookStackインスタンスのコンテンツにアクセスできるようになります。',
+    'app_public_access_desc' => 'このオプションを有効にすると、ログインしていない訪問者があなたのshin·on Wiki by BookStackインスタンスのコンテンツにアクセスできるようになります。',
     'app_public_access_desc_guest' => '一般の訪問者のアクセスは、「ゲスト」ユーザー権限を通じて制御することができます。',
     'app_public_access_toggle' => 'パブリックアクセスを許可',
     'app_public_viewing' => 'アプリケーションを公開する',
@@ -215,7 +215,7 @@ return [
     'users_search' => 'ユーザー検索',
     'users_latest_activity' => '最新のアクティビティ',
     'users_details' => 'ユーザーの詳細',
-    'users_details_desc' => 'このユーザーの表示名とメールアドレスを設定します。メールアドレスは、アプリケーションへのログインに使用されます。',
+    'users_details_desc' => 'このユーザーの表示名とLINE WORKS IDを設定します。LINE WORKS IDは、アプリケーションへのログインに使用されます。',
     'users_details_desc_no_email' => 'このユーザーの表示名を設定して、他のユーザーが認識できるようにします。',
     'users_role' => 'ユーザーの役割',
     'users_role_desc' => 'このユーザーに割り当てる役割を選択します。ユーザーが複数の役割に割り当てられている場合は、それらの役割の権限が重ね合わされ、割り当てられた役割のすべての権限が与えられます。',
@@ -224,7 +224,7 @@ return [
     'users_send_invite_text' => 'このユーザーに招待メールを送信してユーザー自身にパスワードを設定してもらうか、あなたがここでパスワードを設定するかを選択できます。',
     'users_send_invite_option' => 'ユーザーに招待メールを送信',
     'users_external_auth_id' => '外部認証ID',
-    'users_external_auth_id_desc' => '外部認証システム（SAML2、OIDC、LDAPなど）が使用されている場合、このBookStackユーザーを認証システムアカウントにリンクするIDです。デフォルトの電子メールベース認証を使用する場合は、このフィールドを無視できます。',
+    'users_external_auth_id_desc' => '外部認証システム（SAML2、OIDC、LDAPなど）が使用されている場合、このshin·on Wiki by BookStackユーザーを認証システムアカウントにリンクするIDです。デフォルトの電子メールベース認証を使用する場合は、このフィールドを無視できます。',
     'users_password_warning' => 'このユーザーのパスワードを変更したい場合にのみ、以下を入力してください。',
     'users_system_public' => 'このユーザーはアプリケーションにアクセスする全てのゲストを表します。ログインはできませんが、自動的に割り当てられます。',
     'users_delete' => 'ユーザを削除',
@@ -250,7 +250,7 @@ return [
     'users_social_connected' => '「:socialAccount」がプロフィールに接続されました。',
     'users_social_disconnected' => '「:socialAccount」がプロフィールから接続解除されました。',
     'users_api_tokens' => 'APIトークン',
-    'users_api_tokens_desc' => 'BookStack REST APIでの認証に使用するアクセストークンを作成・管理します。APIのパーミッションはトークンが属するユーザーを介して管理されます。',
+    'users_api_tokens_desc' => 'shin·on Wiki by BookStack REST APIでの認証に使用するアクセストークンを作成・管理します。APIのパーミッションはトークンが属するユーザーを介して管理されます。',
     'users_api_tokens_none' => 'このユーザーにはAPIトークンが作成されていません',
     'users_api_tokens_create' => 'トークンを作成',
     'users_api_tokens_expires' => '有効期限',
@@ -309,8 +309,8 @@ return [
 
     // Licensing
     'licenses' => 'ライセンス',
-    'licenses_desc' => 'このページではBookStackとBookStackで使用されるプロジェクトやライブラリのライセンス情報を詳しく説明します。開発環境でのみ使用するものも多数含まれています。',
-    'licenses_bookstack' => 'BookStack ライセンス',
+    'licenses_desc' => 'このページではshin·on Wiki by BookStackとBookStackで使用されるプロジェクトやライブラリのライセンス情報を詳しく説明します。開発環境でのみ使用するものも多数含まれています。',
+    'licenses_bookstack' => 'shin·on Wiki by BookStack ライセンス',
     'licenses_php' => 'PHPライブラリライセンス',
     'licenses_js' => 'JavaScriptライブラリライセンス',
     'licenses_other' => 'その他のライセンス',
@@ -321,50 +321,7 @@ return [
     //!////////////////////////////////
     'language_select' => [
         'en' => 'English',
-        'ar' => 'العربية',
-        'bg' => 'Bǎlgarski',
-        'bs' => 'Bosanski',
-        'ca' => 'Català',
-        'cs' => 'Česky',
-        'cy' => 'Cymraeg',
-        'da' => 'Dansk',
-        'de' => 'Deutsch (Sie)',
-        'de_informal' => 'Deutsch (Du)',
-        'el' => 'ελληνικά',
-        'es' => 'Español',
-        'es_AR' => 'Español Argentina',
-        'et' => 'Eesti keel',
-        'eu' => 'Euskara',
-        'fa' => 'فارسی',
-        'fi' => 'Suomi',
-        'fr' => 'Français',
-        'he' => 'עברית',
-        'hr' => 'Hrvatski',
-        'hu' => 'Magyar',
-        'id' => 'Bahasa Indonesia',
-        'it' => 'Italian',
         'ja' => '日本語',
-        'ko' => '한국어',
-        'lt' => 'Lietuvių Kalba',
-        'lv' => 'Latviešu Valoda',
-        'nb' => 'Norsk (Bokmål)',
-        'ne' => 'नेपाली',
-        'nn' => 'Nynorsk',
-        'nl' => 'Nederlands',
-        'pl' => 'Polski',
-        'pt' => 'Português',
-        'pt_BR' => 'Português do Brasil',
-        'ro' => 'Română',
-        'ru' => 'Русский',
-        'sk' => 'Slovensky',
-        'sl' => 'Slovenščina',
-        'sv' => 'Svenska',
-        'tr' => 'Türkçe',
-        'uk' => 'Українська',
-        'uz' => 'O‘zbekcha',
-        'vi' => 'Tiếng Việt',
-        'zh_CN' => '简体中文',
-        'zh_TW' => '繁體中文',
     ],
     //!////////////////////////////////
 ];

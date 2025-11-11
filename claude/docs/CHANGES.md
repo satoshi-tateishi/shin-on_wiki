@@ -1,8 +1,8 @@
-# BookStack LINE WORKS SSO 統合 - 変更内容サマリー
+# shin·on Wiki by BookStack - LINE WORKS SSO 統合 変更内容サマリー
 
 ## 変更概要
 
-BookStackにLINE WORKS OAuth 2.0/OpenID Connect認証を統合し、shin-on1981ドメインのユーザーのみがログインできるように実装しました。
+shin·on Wiki by BookStack (BookStackベース) にLINE WORKS OAuth 2.0/OpenID Connect認証を統合し、shin-on1981ドメインのユーザーのみがログインできるように実装しました。
 
 ## 変更日
 

@@ -17,9 +17,6 @@
                 <section class="card content-wrap auto-height">
                     <div class="grid half v-center">
                         <div>
-                            <div class="mr-m float left">
-                                <img class="avatar square huge" src="{{ $user->getAvatar(120) }}" alt="{{ $user->name }}">
-                            </div>
                             <div>
                                 <h4 class="mt-md">{{ $user->name }}</h4>
                                 <p class="text-muted">

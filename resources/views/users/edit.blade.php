@@ -14,26 +14,6 @@
                 <div class="setting-list">
                     @include('users.parts.form', ['model' => $user, 'authMethod' => $authMethod])
 
-                    <div class="grid half gap-xl">
-                        <div>
-                            <label for="user-avatar"
-                                   class="setting-list-label">{{ trans('settings.users_avatar') }}</label>
-                            <p class="small">{{ trans('settings.users_avatar_desc') }}</p>
-                        </div>
-                        <div>
-                            @include('form.image-picker', [
-                                'resizeHeight' => '512',
-                                'resizeWidth' => '512',
-                                'showRemove' => false,
-                                'defaultImage' => url('/user_avatar.png'),
-                                'currentImage' => $user->getAvatar(80),
-                                'currentId' => $user->image_id,
-                                'name' => 'profile_image',
-                                'imageClass' => 'avatar large'
-                            ])
-                        </div>
-                    </div>
-
                     @if(!$user->isGuest())
                         @include('users.parts.language-option-row', ['value' => old('language') ?? $user->getLocale()->appLocale()])
                     @endif
@@ -51,6 +31,7 @@
             </form>
         </section>
 
+        {{-- 多要素認証セクションをコメントアウト
         <section class="card content-wrap auto-height">
             <h2 class="list-heading">{{ trans('settings.users_mfa') }}</h2>
             <p class="text-small">{{ trans('settings.users_mfa_desc') }}</p>
@@ -72,6 +53,7 @@
             </div>
 
         </section>
+        --}}
 
         @if(count($activeSocialDrivers) > 0)
             <section class="card content-wrap auto-height">
@@ -102,7 +84,9 @@
             </section>
         @endif
 
+        {{-- APIトークンセクションをコメントアウト
         @include('users.api-tokens.parts.list', ['user' => $user, 'context' => 'settings'])
+        --}}
     </div>
 
 @stop

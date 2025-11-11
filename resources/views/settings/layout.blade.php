@@ -12,7 +12,9 @@
                 <nav class="active-link-list in-sidebar">
                     <a href="{{ url('/settings/features') }}" class="{{ $category === 'features' ? 'active' : '' }}">@icon('star') {{ trans('settings.app_features_security') }}</a>
                     <a href="{{ url('/settings/customization') }}" class="{{ $category === 'customization' ? 'active' : '' }}">@icon('palette') {{ trans('settings.app_customization') }}</a>
+                    {{-- 登録設定をコメントアウト
                     <a href="{{ url('/settings/registration') }}" class="{{ $category === 'registration' ? 'active' : '' }}">@icon('security') {{ trans('settings.reg_settings') }}</a>
+                    --}}
                     <a href="{{ url('/settings/sorting') }}" class="{{ $category === 'sorting' ? 'active' : '' }}">@icon('sort') {{ trans('settings.sorting') }}</a>
                 </nav>
 
