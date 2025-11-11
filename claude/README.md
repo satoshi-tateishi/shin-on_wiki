@@ -104,11 +104,15 @@ openssl x509 -in claude/certs/localhost+2.pem -text -noout
 openssl x509 -in claude/certs/localhost+2.pem -noout -dates
 ```
 
-## 🔗 関連ファイル
+## 🔗 関連ファイル・リンク
 
+### プロジェクトファイル
 - [プロジェクトルートREADME](../README.md) - プロジェクト全体の概要
 - [Apache SSL設定](/opt/homebrew/etc/httpd/extra/httpd-bookstack-ssl.conf) - HTTPS設定
 - [.gitignore](../.gitignore) - Git除外ファイル
+
+### 外部リンク
+- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
 
 ## 📅 最終更新日
 

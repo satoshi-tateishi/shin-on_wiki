@@ -108,6 +108,20 @@
 
 ---
 
+## 🔗 関連リンク
+
+### プロジェクト
+- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
+- [プロジェクトルートREADME](../../README.md) - プロジェクト全体の概要
+
+### 技術資料
+- [BookStack公式サイト](https://www.bookstackapp.com/)
+- [LINE WORKS API ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
+- [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+
+---
+
 ## 👥 作成者
 
 Claude Code + satoshi

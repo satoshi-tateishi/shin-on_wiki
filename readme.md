@@ -106,7 +106,20 @@ shin-on_wiki/
 
 ## 🔐 環境変数
 
-主要な環境変数（`.env`）:
+### 環境変数ファイルの構成
+
+| ファイル | 用途 | 説明 |
+|---------|------|------|
+| `.env` | 実際の設定ファイル | gitignore対象、本番/開発環境の実際の値を設定 |
+| `.env.example` | LINE WORKS SSO用テンプレート | このプロジェクト用にカスタマイズ済み |
+| `.env.example.complete` | BookStack全機能リファレンス | 公式の完全な環境変数一覧（413行） |
+
+> 💡 **セットアップ時**: `.env.example`をコピーして`.env`を作成してください
+> ```bash
+> cp .env.example .env
+> ```
+
+### 主要な環境変数（`.env`）:
 
 ```env
 # Application
@@ -225,6 +238,7 @@ LINE WORKSはJWKSエンドポイントを提供していないため、JWT署名
 
 ## 🔗 関連リンク
 
+- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
 - [BookStack公式サイト](https://www.bookstackapp.com/)
 - [LINE WORKS API ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
 - [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)

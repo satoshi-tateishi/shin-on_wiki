@@ -276,6 +276,10 @@ APP_URL=https://localhost:8443
 
 ## 参考資料
 
+### プロジェクト
+- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
+
+### 技術資料
 - [LINE WORKS API ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
 - [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)

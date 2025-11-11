@@ -24,6 +24,10 @@
    # .envファイルを編集してLINE WORKS設定を追加
    ```
 
+   > 📝 **環境変数ファイルについて**:
+   > - `.env.example` - LINE WORKS SSO用テンプレート（このプロジェクト専用）
+   > - `.env.example.complete` - BookStack全機能のリファレンス（413行、公式）
+
 3. **データベースのセットアップ**
    ```bash
    php artisan migrate
@@ -146,6 +150,12 @@ tail -f storage/logs/laravel.log
 - ✅ Issuer/Audience検証
 
 詳細は [LINEWORKS_SSO_SETUP.md](LINEWORKS_SSO_SETUP.md) を参照してください。
+
+## 関連リンク
+
+- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
+- [BookStack公式サイト](https://www.bookstackapp.com/)
+- [LINE WORKS API ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
 
 ## ライセンス
 
