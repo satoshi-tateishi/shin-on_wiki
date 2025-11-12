@@ -131,29 +131,17 @@ class ImageResizer
         $this->orientImageToOriginalExif($thumb, $imageData);
 
         if ($keepRatio) {
-            $thumb->scaleDown($width, $height);
-
-            // Add square padding for cover images
-            // Only process if target is square (e.g., 384×384 for book/shelf covers)
+            // For square targets (e.g., 384×384 for book/shelf covers), use pad() for proper square padding
             if ($width === $height) {
-                $currentWidth = $thumb->width();
-                $currentHeight = $thumb->height();
+                // Determine background color
+                // Use transparent for PNG, white otherwise
+                $backgroundColor = $format === 'png' ? '00000000' : 'ffffff';
 
-                // If image is not square after scaling, add padding
-                if ($currentWidth !== $currentHeight) {
-                    $size = max($width, $height);
-
-                    // Determine background color
-                    // Use transparent for PNG with alpha channel, white otherwise
-                    $backgroundColor = 'rgb(255,255,255)';
-                    if ($format === 'png') {
-                        // For PNG, use transparent background
-                        $backgroundColor = 'rgba(255,255,255,0)';
-                    }
-
-                    // Resize canvas to square, centering the image
-                    $thumb->resizeCanvas($size, $size, 'center', false, $backgroundColor);
-                }
+                // Pad to square, centering the image
+                $thumb->pad($width, $height, $backgroundColor, 'center');
+            } else {
+                // For non-square targets, use scaleDown
+                $thumb->scaleDown($width, $height);
             }
         } else {
             $thumb->cover($width, $height);
