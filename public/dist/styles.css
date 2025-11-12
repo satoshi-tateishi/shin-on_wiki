@@ -6963,7 +6963,7 @@ html.dark-mode .card .entity-list-item:not(.no-hover, .book-contents .entity-lis
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: contain;
+  background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   background-color: #fff;
@@ -7168,7 +7168,7 @@ html.dark-mode .dropdown-menu .icon-item, html.dark-mode .dropdown-menu .text-it
   position: relative;
   overflow: hidden;
   aspect-ratio: 1/1;
-  background-size: contain;
+  background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   background-color: #fff;
