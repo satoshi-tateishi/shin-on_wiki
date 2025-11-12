@@ -373,6 +373,53 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 'cover_image_description' => 'この画像は384x384pxの正方形にしてください。正方形でない画像は、元のアスペクト比を維持するために、白色または透明な背景で自動的にパディングされます。',
 ```
 
+#### 5. resources/sass/_lists.scss (行582-615, 773-790)
+**変更箇所**: 画像表示のCSS設定
+
+**リストビューの変更** (行582-615):
+```scss
+.entity-list-item-image {
+  width: 140px;
+  height: 140px;  // 高さを追加して正方形に
+  // align-self: stretch; を削除
+
+  &.entity-list-item-image-wide {
+    width: 220px;
+    height: 220px;  // 高さを追加
+  }
+
+  @include mixins.smaller-than(vars.$bp-m) {
+    width: 80px;
+    height: 80px;  // モバイルでも正方形
+  }
+}
+
+.chapter > .entity-list-item-image {
+  width: 60px;
+  height: 60px;  // 高さを追加
+}
+```
+
+**グリッドビューの変更** (行773-790):
+```scss
+.featured-image-container {
+  aspect-ratio: 1 / 1;  // 正方形のアスペクト比
+  // min-height: 140px; を削除
+}
+```
+
+**理由**:
+- リストビュー: 画像が縦に伸びないように固定サイズで正方形化
+- グリッドビュー: レスポンシブに対応しながら正方形を維持
+- すべての表示箇所で統一感のある正方形表示を実現
+
+#### 6. ビルドファイル
+**変更内容**: CSS/JSのビルド
+- `npm run build` でコンパイル
+- public/dist/*.css, *.js が更新
+
+---
+
 **期待される効果**:
 - ✅ カバー画像の統一感向上（すべて正方形）
 - ✅ ストレージ使用量44%削減
@@ -380,13 +427,22 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 - ✅ ページ読み込み速度向上
 - ✅ リストビュー・グリッドビューで適切な品質維持
 - ✅ アスペクト比を維持（画像の歪みなし）
+- ✅ 一覧ページでも正方形で統一表示
 
 **技術的な詳細**:
+
+アップロード時の処理:
 - 横長画像: 上下に余白が追加される
 - 縦長画像: 左右に余白が追加される
 - 正方形画像: そのままリサイズされる
 - PNG画像: 透明背景を使用
 - JPEG/その他: 白背景を使用
+
+表示時の処理:
+- リストビュー: 140px × 140px（モバイル: 80px × 80px）
+- Wide版: 220px × 220px
+- Chapter: 60px × 60px
+- グリッドビュー: アスペクト比1:1でレスポンシブ
 
 ---
 

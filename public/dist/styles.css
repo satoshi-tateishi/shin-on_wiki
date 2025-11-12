@@ -6960,8 +6960,8 @@ html.dark-mode .card .entity-list-item:not(.no-hover, .book-contents .entity-lis
 }
 
 .entity-list-item-image {
-  align-self: stretch;
   width: 140px;
+  height: 140px;
   flex: none;
   background-size: cover;
   background-position: 50% 50%;
@@ -6971,6 +6971,7 @@ html.dark-mode .card .entity-list-item:not(.no-hover, .book-contents .entity-lis
 }
 .entity-list-item-image.entity-list-item-image-wide {
   width: 220px;
+  height: 220px;
 }
 .entity-list-item-image .svg-icon {
   color: #fff;
@@ -6986,11 +6987,13 @@ html.dark-mode .entity-list-item-image .svg-icon {
 @media screen and (max-width: 880px) {
   .entity-list-item-image {
     width: 80px;
+    height: 80px;
   }
 }
 
 .chapter > .entity-list-item-image {
   width: 60px;
+  height: 60px;
 }
 
 .entity-list.compact {
@@ -7159,7 +7162,7 @@ html.dark-mode .dropdown-menu .icon-item, html.dark-mode .dropdown-menu .text-it
 .featured-image-container {
   position: relative;
   overflow: hidden;
-  min-height: 140px;
+  aspect-ratio: 1/1;
   background-size: cover;
   background-position: 50% 50%;
   transition: opacity ease-in-out 240ms;

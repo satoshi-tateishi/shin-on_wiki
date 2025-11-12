@@ -580,8 +580,8 @@ ul.pagination {
 }
 
 .entity-list-item-image {
-  align-self: stretch;
   width: 140px;
+  height: 140px;
   flex: none;
   background-size: cover;
   background-position: 50% 50%;
@@ -591,6 +591,7 @@ ul.pagination {
 
   &.entity-list-item-image-wide {
     width: 220px;
+    height: 220px;
   }
 
   .svg-icon {
@@ -604,11 +605,13 @@ ul.pagination {
 
   @include mixins.smaller-than(vars.$bp-m) {
     width: 80px;
+    height: 80px;
   }
 }
 
 .chapter > .entity-list-item-image {
   width: 60px;
+  height: 60px;
 }
 
 .entity-list.compact {
@@ -771,7 +774,7 @@ ul.pagination {
 .featured-image-container {
   position: relative;
   overflow: hidden;
-  min-height: 140px;
+  aspect-ratio: 1 / 1;
   background-size: cover;
   background-position: 50% 50%;
   transition: opacity ease-in-out 240ms;
