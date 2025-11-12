@@ -4,7 +4,7 @@
      */
 @endphp
 <a href="{{ $book->getUrl() }}" class="book entity-list-item" data-entity-type="book" data-entity-id="{{$book->id}}">
-    <div class="entity-list-item-image bg-book" style="background-image: url('{{ $book->coverInfo()->getUrl() }}')">
+    <div class="entity-list-item-image bg-book" style="background-image: url('{{ $book->coverInfo()->getUrl(250, 250) }}')">
         @icon('book')
     </div>
     <div class="content">

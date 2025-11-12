@@ -583,7 +583,7 @@ ul.pagination {
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   @include mixins.lightDark(background-color, #fff, #333);

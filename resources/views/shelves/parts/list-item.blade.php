@@ -1,5 +1,5 @@
 <a href="{{ $shelf->getUrl() }}" class="shelf entity-list-item" data-entity-type="bookshelf" data-entity-id="{{$shelf->id}}">
-    <div class="entity-list-item-image bg-bookshelf @if($shelf->coverInfo()->exists()) has-image @endif" style="background-image: url('{{ $shelf->coverInfo()->getUrl() }}')">
+    <div class="entity-list-item-image bg-bookshelf @if($shelf->coverInfo()->exists()) has-image @endif" style="background-image: url('{{ $shelf->coverInfo()->getUrl(250, 250) }}')">
         @icon('bookshelf')
     </div>
     <div class="content py-xs">

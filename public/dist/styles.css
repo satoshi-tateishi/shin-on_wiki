@@ -3240,6 +3240,13 @@ html.dark-mode .contained-search-box button {
   max-width: 100%;
 }
 
+.image-picker img.cover {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+  object-position: center;
+}
+
 .custom-file-input {
   overflow: hidden;
   padding: 0;
@@ -6963,7 +6970,7 @@ html.dark-mode .card .entity-list-item:not(.no-hover, .book-contents .entity-lis
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: cover;
+  background-size: 100% 100%;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   background-color: #fff;

@@ -113,7 +113,7 @@ class BaseRepo
         if ($coverImage) {
             $imageType = 'cover_' . $entity->type;
             $this->imageRepo->destroyImage($entity->coverInfo()->getImage());
-            $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 384, true);
+            $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 384, false);
             $entity->coverInfo()->setImage($image);
             $entity->save();
         }
