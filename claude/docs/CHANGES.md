@@ -289,6 +289,107 @@ APP_URL=https://localhost:8443
 
 Claude Code + satoshi
 
+## カバー画像の正方形化
+
+### カバー画像を384×384px正方形に変更
+
+**変更日**: 2025年11月12日
+
+**変更内容**:
+- 本棚（Shelf）と本（Book）のカバー画像を正方形化
+- 画像サイズを512×512pxから384×384pxに変更
+- パディング（余白追加）方式で正方形化を実装
+- UIメッセージを更新
+
+**変更ファイル**:
+
+#### 1. app/Uploads/ImageResizer.php (行133-160)
+**追加機能**: 正方形パディング処理
+
+```php
+if ($keepRatio) {
+    $thumb->scaleDown($width, $height);
+
+    // Add square padding for cover images
+    if ($width === $height) {
+        $currentWidth = $thumb->width();
+        $currentHeight = $thumb->height();
+
+        if ($currentWidth !== $currentHeight) {
+            $size = max($width, $height);
+            $backgroundColor = 'rgb(255,255,255)';
+            if ($format === 'png') {
+                $backgroundColor = 'rgba(255,255,255,0)';
+            }
+            $thumb->resizeCanvas($size, $size, 'center', false, $backgroundColor);
+        }
+    }
+}
+```
+
+**理由**:
+- 横長・縦長画像を正方形に統一
+- アスペクト比を維持しながらパディング
+- PNG画像は透明背景、その他は白背景
+
+#### 2. app/Entities/Repos/BaseRepo.php (行116)
+**変更箇所**: 画像サイズ指定
+
+**変更前**:
+```php
+$image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 512, 512, true);
+```
+
+**変更後**:
+```php
+$image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 384, true);
+```
+
+**理由**: ストレージ44%削減、転送量44%削減、最適なバランス
+
+#### 3. lang/en/common.php (行23)
+**変更箇所**: カバー画像説明メッセージ
+
+**変更前**:
+```php
+'cover_image_description' => 'This image should be approximately 440x250px although it will be flexibly scaled & cropped to fit the user interface in different scenarios as required, so actual dimensions for display will differ.',
+```
+
+**変更後**:
+```php
+'cover_image_description' => 'This image should be 384x384px square. Non-square images will be automatically padded with white/transparent backgrounds to maintain the original aspect ratio.',
+```
+
+#### 4. lang/ja/common.php (行23)
+**変更箇所**: カバー画像説明メッセージ
+
+**変更前**:
+```php
+'cover_image_description' => 'この画像はおよそ440x250pxであるべきですが、必要に応じてさまざまなシナリオでユーザー・インターフェースに合うように柔軟に拡大・縮小されるため、実際の表示寸法は異なります。',
+```
+
+**変更後**:
+```php
+'cover_image_description' => 'この画像は384x384pxの正方形にしてください。正方形でない画像は、元のアスペクト比を維持するために、白色または透明な背景で自動的にパディングされます。',
+```
+
+**期待される効果**:
+- ✅ カバー画像の統一感向上（すべて正方形）
+- ✅ ストレージ使用量44%削減
+- ✅ 転送量44%削減
+- ✅ ページ読み込み速度向上
+- ✅ リストビュー・グリッドビューで適切な品質維持
+- ✅ アスペクト比を維持（画像の歪みなし）
+
+**技術的な詳細**:
+- 横長画像: 上下に余白が追加される
+- 縦長画像: 左右に余白が追加される
+- 正方形画像: そのままリサイズされる
+- PNG画像: 透明背景を使用
+- JPEG/その他: 白背景を使用
+
+---
+
 ## 開発環境の変更
 
 ### GitHub Actions ワークフローの削除

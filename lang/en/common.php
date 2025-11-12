@@ -20,7 +20,7 @@ return [
     'description' => 'Description',
     'role' => 'Role',
     'cover_image' => 'Cover image',
-    'cover_image_description' => 'This image should be approximately 440x250px although it will be flexibly scaled & cropped to fit the user interface in different scenarios as required, so actual dimensions for display will differ.',
+    'cover_image_description' => 'This image should be 384x384px square. Non-square images will be automatically padded with white/transparent backgrounds to maintain the original aspect ratio.',
 
     // Actions
     'actions' => 'Actions',
