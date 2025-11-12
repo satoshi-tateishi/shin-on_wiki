@@ -303,22 +303,25 @@ Claude Code + satoshi
 
 **変更ファイル**:
 
-#### 1. app/Uploads/ImageResizer.php (行133-148)
+#### 1. app/Uploads/ImageResizer.php (行133-154)
 **追加機能**: 正方形パディング処理
 
 ```php
 if ($keepRatio) {
-    // For square targets (e.g., 384×384 for book/shelf covers), use pad() for proper square padding
-    if ($width === $height) {
-        // Determine background color
-        // Use transparent for PNG, white otherwise
-        $backgroundColor = $format === 'png' ? '00000000' : 'ffffff';
+    // First, scale down if image is larger than target (never scale up)
+    $thumb->scaleDown($width, $height);
 
-        // Pad to square, centering the image
-        $thumb->pad($width, $height, $backgroundColor, 'center');
-    } else {
-        // For non-square targets, use scaleDown
-        $thumb->scaleDown($width, $height);
+    // For square targets, add padding to make it exactly square
+    if ($width === $height) {
+        $currentWidth = $thumb->width();
+        $currentHeight = $thumb->height();
+
+        if ($currentWidth !== $width || $currentHeight !== $height) {
+            $backgroundColor = $format === 'png' ? '00000000' : 'ffffff';
+
+            // Add padding without scaling - resizeCanvas changes canvas size, not image size
+            $thumb->resizeCanvas($width, $height, $backgroundColor, 'center');
+        }
     }
 }
 ```
@@ -327,7 +330,8 @@ if ($keepRatio) {
 - 横長・縦長画像を正方形に統一
 - アスペクト比を維持しながらパディング
 - PNG画像は透明背景（00000000）、その他は白背景（ffffff）
-- Intervention Image v3の`pad()`メソッドを使用（v2の`resizeCanvas()`は非互換）
+- `scaleDown()`: 大きい画像のみ縮小（小さい画像は拡大しない）
+- `resizeCanvas()`: キャンバスサイズのみ変更（画像自体は拡大しない）
 
 #### 2. app/Entities/Repos/BaseRepo.php (行116)
 **変更箇所**: 画像サイズ指定
