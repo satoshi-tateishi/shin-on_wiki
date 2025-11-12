@@ -289,6 +289,35 @@ APP_URL=https://localhost:8443
 
 Claude Code + satoshi
 
+## 開発環境の変更
+
+### GitHub Actions ワークフローの削除
+
+**変更日**: 2025年11月12日
+
+**変更内容**:
+- `.github/workflows/test-php.yml` を削除
+
+**理由**:
+- 個人開発環境のため、CI/CDによる自動テストが不要
+- 毎回のプッシュ時にPHP 8.2, 8.3, 8.4でのテスト実行によるエラーメール通知が煩雑
+- 手動でのテスト実行で品質管理が可能
+
+**影響**:
+- GitHubへのプッシュ時にPHPユニットテストが自動実行されなくなります
+- 必要に応じて手動でテストを実行：`php artisan test` または `./vendor/bin/phpunit`
+
+**残存するワークフロー**:
+- `analyse-php.yml` - PHP静的解析
+- `lint-js.yml` - JavaScript Lint
+- `lint-php.yml` - PHP Lint
+- `test-js.yml` - JavaScriptテスト
+- `test-migrations.yml` - マイグレーションテスト
+
+これらのワークフローは様子見として残しています。必要に応じて今後削除を検討します。
+
+---
+
 ## バージョン
 
 BookStack v25.11 + LINE WORKS SSO統合
