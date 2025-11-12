@@ -583,8 +583,10 @@ ul.pagination {
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: cover;
+  background-size: contain;
   background-position: 50% 50%;
+  background-repeat: no-repeat;
+  @include mixins.lightDark(background-color, #fff, #333);
   border-radius: 3px;
   position: relative;
   margin-inline-end: vars.$l;
@@ -775,8 +777,10 @@ ul.pagination {
   position: relative;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background-size: cover;
+  background-size: contain;
   background-position: 50% 50%;
+  background-repeat: no-repeat;
+  @include mixins.lightDark(background-color, #fff, #333);
   transition: opacity ease-in-out 240ms;
   a {
     display: block;

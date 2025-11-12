@@ -378,6 +378,9 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 .entity-list-item-image {
   width: 140px;
   height: 140px;  // 高さを追加して正方形に
+  background-size: contain;  // cover → contain に変更（拡大防止）
+  background-repeat: no-repeat;  // 繰り返し防止
+  @include mixins.lightDark(background-color, #fff, #333);  // 背景色追加
   // align-self: stretch; を削除
 
   &.entity-list-item-image-wide {
@@ -397,10 +400,13 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 }
 ```
 
-**グリッドビューの変更** (行773-790):
+**グリッドビューの変更** (行775-794):
 ```scss
 .featured-image-container {
   aspect-ratio: 1 / 1;  // 正方形のアスペクト比
+  background-size: contain;  // cover → contain に変更（拡大防止）
+  background-repeat: no-repeat;  // 繰り返し防止
+  @include mixins.lightDark(background-color, #fff, #333);  // 背景色追加
   // min-height: 140px; を削除
 }
 ```
@@ -408,6 +414,9 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 **理由**:
 - リストビュー: 画像が縦に伸びないように固定サイズで正方形化
 - グリッドビュー: レスポンシブに対応しながら正方形を維持
+- `background-size: contain`: 画像全体を表示（拡大しない）
+- `background-color`: ライトモード=白、ダークモード=濃いグレー
+- 透明背景のPNG画像も適切に表示される
 - すべての表示箇所で統一感のある正方形表示を実現
 
 #### 6. ビルドファイル
