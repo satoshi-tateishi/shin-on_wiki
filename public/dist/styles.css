@@ -1470,6 +1470,10 @@ html.dark-mode .text-dark {
 .grid.gap-y-xs {
   grid-row-gap: 6px;
 }
+.grid.gap-s {
+  grid-column-gap: 12px;
+  grid-row-gap: 12px;
+}
 .grid.gap-xl {
   grid-column-gap: 32px;
   grid-row-gap: 32px;
@@ -2177,10 +2181,11 @@ html.dark-mode .card.drag-card .handle {
   flex-direction: column;
   border: 1px solid #ddd;
   border-color: #ddd;
-  margin-bottom: 24px;
+  margin-bottom: 0;
   border-radius: 4px;
   overflow: hidden;
   min-width: 100px;
+  width: 140px;
   color: #444;
   transition: border-color ease-in-out 120ms, box-shadow ease-in-out 120ms;
 }
@@ -2197,13 +2202,13 @@ html.dark-mode .grid-card:hover {
 }
 .grid-card h2 {
   width: 100%;
-  font-size: 1.5em;
-  margin: 0 0 10px;
+  font-size: 0.9em;
+  margin: 0 0 4px;
 }
 .grid-card p {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   margin: 0;
-  line-height: 1.6em;
+  line-height: 1.4em;
 }
 .grid-card .grid-card-content {
   flex: 1;
@@ -2211,10 +2216,20 @@ html.dark-mode .grid-card:hover {
   border-bottom-width: 2px;
 }
 .grid-card .grid-card-content, .grid-card .grid-card-footer {
-  padding: 24px;
+  padding: 12px;
 }
 .grid-card .grid-card-content + .grid-card-footer {
   padding-top: 0;
+}
+.grid-card .grid-card-shelf-names {
+  font-size: 0.7em;
+  margin-bottom: 2px;
+}
+.grid-card .grid-card-shelf-names .shelf-name-text {
+  color: #777;
+}
+html.dark-mode .grid-card .grid-card-shelf-names .shelf-name-text {
+  color: #aaa;
 }
 
 .book-grid-item .grid-card-footer p.small {
@@ -6527,6 +6542,16 @@ html.dark-mode .book-tree .sidebar-page-list .entity-list-item.selected {
   margin: 0;
   margin-inline-end: 16px;
 }
+.book-tree .sidebar-page-list .entity-list-item-shelf-names {
+  font-size: 0.75em;
+  margin-bottom: 3px;
+}
+.book-tree .sidebar-page-list .entity-list-item-shelf-names .shelf-name-text {
+  color: #777;
+}
+html.dark-mode .book-tree .sidebar-page-list .entity-list-item-shelf-names .shelf-name-text {
+  color: #aaa;
+}
 .book-tree .sidebar-page-list .chapter-child-menu {
   font-size: 0.8rem;
   margin-top: -0.2rem;
@@ -6700,9 +6725,6 @@ details.sort-box[open] summary .caret-container svg {
 
 .activity-list-item {
   padding: 12px 0;
-  display: grid;
-  grid-template-columns: min-content 1fr;
-  grid-column-gap: 16px;
   font-size: 0.9em;
 }
 
@@ -6970,7 +6992,7 @@ html.dark-mode .card .entity-list-item:not(.no-hover, .book-contents .entity-lis
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: 100% 100%;
+  background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   background-color: #fff;
@@ -7175,6 +7197,7 @@ html.dark-mode .dropdown-menu .icon-item, html.dark-mode .dropdown-menu .text-it
   position: relative;
   overflow: hidden;
   aspect-ratio: 1/1;
+  width: 100%;
   background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
@@ -7196,14 +7219,20 @@ html.dark-mode .featured-image-container {
 
 .featured-image-container-wrap {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 1/1;
 }
 .featured-image-container-wrap .svg-icon {
   color: #fff;
-  font-size: 2rem;
+  font-size: 1.66rem;
   margin-inline-end: 0;
   position: absolute;
   bottom: 10px;
-  left: 6px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 html.dark-mode .featured-image-container-wrap .svg-icon {
   color: rgba(255, 255, 255, 0.6);

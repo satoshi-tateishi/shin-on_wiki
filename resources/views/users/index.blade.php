@@ -35,7 +35,9 @@
 
             <div class="item-list">
                 @foreach($users as $user)
-                    @include('users.parts.users-list-item', ['user' => $user])
+                    @if($user->name !== 'Guest')
+                        @include('users.parts.users-list-item', ['user' => $user])
+                    @endif
                 @endforeach
             </div>
 

@@ -96,6 +96,12 @@ class RoleController extends Controller
         $this->checkPermission(Permission::UserRolesManage);
         $role = $this->permissionsRepo->getRoleById($id);
 
+        // Prevent access to Public role
+        if ($role->display_name === 'Public') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/roles');
+        }
+
         $this->setPageTitle(trans('settings.role_edit'));
 
         return view('settings.roles.edit', ['role' => $role]);
@@ -107,6 +113,14 @@ class RoleController extends Controller
     public function update(Request $request, string $id)
     {
         $this->checkPermission(Permission::UserRolesManage);
+        $role = $this->permissionsRepo->getRoleById($id);
+
+        // Prevent access to Public role
+        if ($role->display_name === 'Public') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/roles');
+        }
+
         $data = $this->validate($request, [
             'display_name' => ['required', 'min:3', 'max:180'],
             'description'  => ['max:180'],
@@ -130,6 +144,12 @@ class RoleController extends Controller
     {
         $this->checkPermission(Permission::UserRolesManage);
         $role = $this->permissionsRepo->getRoleById($id);
+
+        // Prevent access to Public role
+        if ($role->display_name === 'Public') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/roles');
+        }
         $roles = $this->permissionsRepo->getAllRolesExcept($role);
         $blankRole = $role->newInstance(['display_name' => trans('settings.role_delete_no_migration')]);
         $roles->prepend($blankRole);
@@ -148,6 +168,14 @@ class RoleController extends Controller
     public function delete(Request $request, string $id)
     {
         $this->checkPermission(Permission::UserRolesManage);
+
+        $role = $this->permissionsRepo->getRoleById($id);
+
+        // Prevent access to Public role
+        if ($role->display_name === 'Public') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/roles');
+        }
 
         try {
             $migrateRoleId = intval($request->get('migrate_role_id') ?: "0");

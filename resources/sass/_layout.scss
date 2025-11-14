@@ -47,6 +47,10 @@
   &.gap-y-xs {
     grid-row-gap: vars.$xs;
   }
+  &.gap-s {
+    grid-column-gap: vars.$s;
+    grid-row-gap: vars.$s;
+  }
   &.gap-xl {
     grid-column-gap: vars.$xl;
     grid-row-gap: vars.$xl;

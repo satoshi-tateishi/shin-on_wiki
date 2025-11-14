@@ -110,10 +110,11 @@
   flex-direction: column;
   border: 1px solid #ddd;
   @include mixins.lightDark(border-color, #ddd, #000);
-  margin-bottom: vars.$l;
+  margin-bottom: 0;
   border-radius: 4px;
   overflow: hidden;
   min-width: 100px;
+  width: 140px;
   color: vars.$text-dark;
   transition: border-color ease-in-out 120ms, box-shadow ease-in-out 120ms;
   &:hover {
@@ -123,13 +124,13 @@
   }
   h2 {
     width: 100%;
-    font-size: 1.5em;
-    margin: 0 0 10px;
+    font-size: 0.9em;
+    margin: 0 0 4px;
   }
   p {
-    font-size: .7rem;
+    font-size: .6rem;
     margin: 0;
-    line-height: 1.6em;
+    line-height: 1.4em;
   }
   .grid-card-content {
     flex: 1;
@@ -137,10 +138,17 @@
     border-bottom-width: 2px;
   }
   .grid-card-content, .grid-card-footer {
-    padding: vars.$l;
+    padding: vars.$s;
   }
   .grid-card-content + .grid-card-footer {
     padding-top: 0;
+  }
+  .grid-card-shelf-names {
+    font-size: 0.7em;
+    margin-bottom: 2px;
+    .shelf-name-text {
+      @include mixins.lightDark(color, #777, #aaa);
+    }
   }
 }
 

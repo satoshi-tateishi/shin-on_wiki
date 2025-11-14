@@ -115,6 +115,12 @@ class UserController extends Controller
         $this->checkPermission(Permission::UsersManage);
 
         $user = $this->userRepo->getById($id);
+
+        // Prevent access to Guest user
+        if ($user->name === 'Guest') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/users');
+        }
         $user->load(['apiTokens', 'mfaValues']);
         $authMethod = ($user->system_name) ? 'system' : config('auth.method');
 
@@ -144,6 +150,14 @@ class UserController extends Controller
         $this->preventAccessInDemoMode();
         $this->checkPermission(Permission::UsersManage);
 
+        $user = $this->userRepo->getById($id);
+
+        // Prevent access to Guest user
+        if ($user->name === 'Guest') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/users');
+        }
+
         $validated = $this->validate($request, [
             'name'             => ['min:1', 'max:100'],
             'email'            => ['min:2', 'email', 'unique:users,email,' . $id],
@@ -156,7 +170,6 @@ class UserController extends Controller
             'profile_image'    => array_merge(['nullable'], $this->getImageValidationRules()),
         ]);
 
-        $user = $this->userRepo->getById($id);
         $this->userRepo->update($user, $validated, true);
 
         // Save profile image if in request
@@ -186,6 +199,12 @@ class UserController extends Controller
         $this->checkPermission(Permission::UsersManage);
 
         $user = $this->userRepo->getById($id);
+
+        // Prevent access to Guest user
+        if ($user->name === 'Guest') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/users');
+        }
         $this->setPageTitle(trans('settings.users_delete_named', ['userName' => $user->name]));
 
         return view('users.delete', ['user' => $user]);
@@ -202,6 +221,12 @@ class UserController extends Controller
         $this->checkPermission(Permission::UsersManage);
 
         $user = $this->userRepo->getById($id);
+
+        // Prevent access to Guest user
+        if ($user->name === 'Guest') {
+            $this->showErrorNotification(trans('errors.error_occurred'));
+            return redirect('/settings/users');
+        }
         $newOwnerId = intval($request->get('new_owner_id')) ?: null;
 
         $this->userRepo->destroy($user, $newOwnerId);

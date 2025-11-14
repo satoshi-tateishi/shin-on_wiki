@@ -8,6 +8,13 @@
         @icon('book')
     </div>
     <div class="content">
+        @if($book->shelves->isNotEmpty())
+            <div class="entity-list-item-shelf-names">
+                @foreach($book->shelves as $shelf)
+                    <span class="shelf-name-text">{{ $shelf->name }}</span>@if(!$loop->last), @endif
+                @endforeach
+            </div>
+        @endif
         <h4 class="entity-list-item-name break-text">{{ $book->name }}</h4>
         <div class="entity-item-snippet">
             <p class="text-muted break-text mb-s text-limit-lines-1">{{ $book->descriptionInfo()->getPlain() }}</p>

@@ -192,6 +192,13 @@
     margin: 0;
     margin-inline-end: vars.$m;
   }
+  .entity-list-item-shelf-names {
+    font-size: 0.75em;
+    margin-bottom: vars.$xxs;
+    .shelf-name-text {
+      @include mixins.lightDark(color, #777, #aaa);
+    }
+  }
   .chapter-child-menu {
     font-size: .8rem;
     margin-top: -.2rem;
@@ -343,9 +350,6 @@ details.sort-box[open] summary .caret-container svg {
 
 .activity-list-item {
   padding: vars.$s 0;
-  display: grid;
-  grid-template-columns: min-content 1fr;
-  grid-column-gap: vars.$m;
   font-size: 0.9em;
 }
 .card .activity-list-item {
@@ -583,7 +587,7 @@ ul.pagination {
   width: 140px;
   height: 140px;
   flex: none;
-  background-size: 100% 100%;
+  background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
   @include mixins.lightDark(background-color, #fff, #333);
@@ -777,6 +781,7 @@ ul.pagination {
   position: relative;
   overflow: hidden;
   aspect-ratio: 1 / 1;
+  width: 100%;
   background-size: cover;
   background-position: 50% 50%;
   background-repeat: no-repeat;
@@ -794,13 +799,19 @@ ul.pagination {
 }
 .featured-image-container-wrap {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   .svg-icon {
     @include mixins.lightDark(color, #fff, rgba(255, 255, 255, 0.6));
-    font-size: 2rem;
+    font-size: 1.66rem;
     margin-inline-end: 0;
     position: absolute;
     bottom: 10px;
-    left: 6px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
 .grid-card:hover .featured-image-container {
