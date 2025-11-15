@@ -38,6 +38,7 @@
         "socialiteproviders/microsoft-azure": "^5.1",
         "socialiteproviders/okta": "^4.2",
         "socialiteproviders/twitch": "^5.3",
+        "spatie/flysystem-dropbox": "^3.0",
         "ssddanbrown/htmldiff": "^2.0.0"
     },
     "require-dev": {

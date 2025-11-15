@@ -304,6 +304,23 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/sorting/rules/{id}', [SortingControllers\SortRuleController::class, 'update']);
     Route::delete('/settings/sorting/rules/{id}', [SortingControllers\SortRuleController::class, 'destroy']);
 
+    // Dropbox OAuth & Backup
+    Route::get('/auth/dropbox/redirect', [\BookStack\Http\Controllers\DropboxAuthController::class, 'redirect']);
+    Route::get('/auth/dropbox/callback', [\BookStack\Http\Controllers\DropboxAuthController::class, 'callback']);
+    Route::get('/api/dropbox/auth-status', [\BookStack\Http\Controllers\DropboxAuthController::class, 'authStatus']);
+    Route::post('/api/dropbox/refresh-token', [\BookStack\Http\Controllers\DropboxAuthController::class, 'refreshToken']);
+    Route::post('/api/dropbox/revoke-auth', [\BookStack\Http\Controllers\DropboxAuthController::class, 'revokeAuth']);
+
+    // Backup Management API
+    Route::post('/api/backup/run', [\BookStack\Http\Controllers\BackupController::class, 'runBackup']);
+    Route::get('/api/backup/list', [\BookStack\Http\Controllers\BackupController::class, 'listBackups']);
+    Route::post('/api/backup/test', [\BookStack\Http\Controllers\BackupController::class, 'testConnection']);
+    Route::post('/api/backup/refresh-token', [\BookStack\Http\Controllers\BackupController::class, 'refreshToken']);
+    Route::get('/api/backup/restorable', [\BookStack\Http\Controllers\BackupController::class, 'getRestorableBackups']);
+    Route::post('/api/backup/download', [\BookStack\Http\Controllers\BackupController::class, 'downloadBackup']);
+    Route::post('/api/backup/restore', [\BookStack\Http\Controllers\BackupController::class, 'restoreDatabase']);
+    Route::post('/api/backup/validate-restore', [\BookStack\Http\Controllers\BackupController::class, 'validateRestore']);
+
     // Settings
     Route::get('/settings', [SettingControllers\SettingController::class, 'index'])->name('settings');
     Route::get('/settings/{category}', [SettingControllers\SettingController::class, 'category'])->name('settings.category');

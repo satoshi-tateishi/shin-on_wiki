@@ -16,7 +16,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        // Dropbox自動バックアップ（毎日深夜2時に実行）
+        $schedule->command('backup:dropbox')->dailyAt('02:00');
     }
 
     /**
