@@ -650,7 +650,7 @@ class BackupService
             if ($connection === 'mysql') {
                 // MySQLコマンドで復元実行
                 $command = sprintf(
-                    'mysql -h%s -P%s -u%s -p%s %s < %s',
+                    'mysql -h%s -P%s -u%s -p%s --skip-ssl %s < %s',
                     escapeshellarg($host),
                     escapeshellarg($port),
                     escapeshellarg($username),
@@ -711,9 +711,84 @@ class BackupService
         $firstLine = fgets($handle);
         fclose($handle);
 
-        // SQLファイルの基本的な形式チェック
-        if (! $firstLine || (! str_contains($firstLine, '--') && ! str_contains(strtoupper($firstLine), 'CREATE') && ! str_contains(strtoupper($firstLine), 'INSERT'))) {
+        // SQLファイルの基本的な形式チェック（--、/*、CREATE、INSERTのいずれかを含む）
+        if (! $firstLine || (! str_contains($firstLine, '--') && ! str_contains($firstLine, '/*') && ! str_contains(strtoupper($firstLine), 'CREATE') && ! str_contains(strtoupper($firstLine), 'INSERT'))) {
             throw new Exception('有効なSQLファイルではありません');
+        }
+    }
+
+    /**
+     * ファイルを復元
+     */
+    public function restoreFiles(string $zipFilePath): array
+    {
+        try {
+            if (! File::exists($zipFilePath)) {
+                throw new Exception("バックアップファイルが見つかりません: {$zipFilePath}");
+            }
+
+            $zip = new ZipArchive;
+            if ($zip->open($zipFilePath) !== true) {
+                throw new Exception("ZIPファイルを開けません: {$zipFilePath}");
+            }
+
+            // 一時展開先
+            $tempExtractDir = storage_path('app/temp_restore_'.time());
+            File::makeDirectory($tempExtractDir, 0755, true);
+
+            // ZIPを展開
+            $zip->extractTo($tempExtractDir);
+            $zip->close();
+
+            // ファイルを復元（public/uploadsのみ）
+            $sourceUploadDir = $tempExtractDir . '/public/uploads';
+            $targetUploadDir = base_path('public/uploads');
+
+            if (File::exists($sourceUploadDir)) {
+                // 既存のアップロードディレクトリをバックアップ
+                $backupUploadDir = base_path('public/uploads_backup_'.time());
+                if (File::exists($targetUploadDir)) {
+                    File::moveDirectory($targetUploadDir, $backupUploadDir);
+                    Log::info('Backed up existing uploads directory', [
+                        'backup_dir' => $backupUploadDir,
+                    ]);
+                }
+
+                // 復元
+                File::copyDirectory($sourceUploadDir, $targetUploadDir);
+
+                Log::info('Files restored successfully', [
+                    'source' => $sourceUploadDir,
+                    'target' => $targetUploadDir,
+                ]);
+            }
+
+            // .env ファイルは復元しない（セキュリティ上の理由）
+            // ログファイルも復元しない
+
+            // 一時ディレクトリを削除
+            File::deleteDirectory($tempExtractDir);
+
+            return [
+                'success' => true,
+                'message' => 'ファイルの復元が完了しました',
+            ];
+
+        } catch (Exception $e) {
+            Log::error('File restore failed', [
+                'zip_file' => $zipFilePath,
+                'error' => $e->getMessage(),
+            ]);
+
+            // クリーンアップ
+            if (isset($tempExtractDir) && File::exists($tempExtractDir)) {
+                File::deleteDirectory($tempExtractDir);
+            }
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
         }
     }
 

@@ -303,24 +303,43 @@
         // Load backup list
         async function loadBackupList() {
             try {
-                const response = await fetch('/api/backup/list');
+                const response = await fetch('/api/backup/restorable');
                 const data = await response.json();
 
                 if (data.success && data.backups && data.backups.length > 0) {
-                    let html = '<table class="table"><thead><tr>' +
-                        '<th>日時</th><th>名前</th><th>パス</th>' +
+                    let html = '<div class="table-responsive"><table class="table"><thead><tr>' +
+                        '<th>日時</th><th>ファイル数</th><th>サイズ</th><th>操作</th>' +
                         '</tr></thead><tbody>';
 
                     data.backups.forEach(backup => {
+                        const fileCount = backup.files ? backup.files.length : 0;
+                        const totalSize = backup.total_size ? (backup.total_size / 1024 / 1024).toFixed(2) + ' MB' : '-';
+
                         html += '<tr>' +
-                            '<td>' + backup.name + '</td>' +
-                            '<td>' + backup.name + '</td>' +
-                            '<td class="text-small text-muted">' + backup.path + '</td>' +
+                            '<td><strong>' + backup.name + '</strong></td>' +
+                            '<td>' + fileCount + ' ファイル</td>' +
+                            '<td>' + totalSize + '</td>' +
+                            '<td>' +
+                            '<button class="button outline small backup-download-btn" data-timestamp="' + backup.name + '">ダウンロード</button> ' +
+                            '<button class="button small backup-restore-btn" data-timestamp="' + backup.name + '">復元</button>' +
+                            '</td>' +
                             '</tr>';
                     });
 
-                    html += '</tbody></table>';
+                    html += '</tbody></table></div>';
                     backupList.innerHTML = html;
+
+                    // Add event delegation for backup buttons
+                    backupList.querySelectorAll('.backup-download-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            downloadBackup(this.dataset.timestamp);
+                        });
+                    });
+                    backupList.querySelectorAll('.backup-restore-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            restoreBackup(this.dataset.timestamp);
+                        });
+                    });
                 } else if (data.success) {
                     backupList.innerHTML = '<p class="text-muted">バックアップ履歴がありません。</p>';
                 } else {
@@ -330,6 +349,102 @@
                 backupList.innerHTML = '<p class="text-danger">エラー: ' + error.message + '</p>';
             }
         }
+
+        // Download backup
+        async function downloadBackup(timestamp) {
+            try {
+                showAlert('info', 'バックアップをダウンロード中...');
+
+                const response = await fetch('/api/backup/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ timestamp: timestamp })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', 'バックアップのダウンロードが完了しました');
+                } else {
+                    showAlert('danger', 'ダウンロード失敗: ' + data.error);
+                }
+            } catch (error) {
+                showAlert('danger', 'エラー: ' + error.message);
+            }
+        }
+
+        // Restore backup
+        async function restoreBackup(timestamp) {
+            // Validation request
+            try {
+                const validateResponse = await fetch('/api/backup/validate-restore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ timestamp: timestamp })
+                });
+
+                const validateData = await validateResponse.json();
+
+                if (!validateData.success) {
+                    showAlert('danger', '検証失敗: ' + validateData.error);
+                    return;
+                }
+
+                // Confirmation dialog
+                const confirmMessage =
+                    '【警告】データベースを復元します\n\n' +
+                    '復元するバックアップ: ' + timestamp + '\n' +
+                    validateData.warning + '\n\n' +
+                    '本当に実行しますか？';
+
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+
+                const createBackup = confirm('復元前に現在のデータベースをバックアップしますか？\n（強く推奨）');
+
+                // Execute restore
+                showAlert('info', 'データベースを復元中... しばらくお待ちください');
+
+                const restoreResponse = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({
+                        timestamp: timestamp,
+                        create_backup_first: createBackup
+                    })
+                });
+
+                const restoreData = await restoreResponse.json();
+
+                if (restoreData.success) {
+                    showAlert('success', '✅ データベースの復元が完了しました！ページをリロードしてください。');
+                    setTimeout(() => {
+                        if (confirm('復元が完了しました。ページをリロードしますか？')) {
+                            window.location.reload();
+                        }
+                    }, 2000);
+                } else {
+                    showAlert('danger', '❌ 復元失敗: ' + restoreData.error);
+                }
+
+            } catch (error) {
+                showAlert('danger', 'エラー: ' + error.message);
+            }
+        }
+
+        // Make functions globally available
+        window.downloadBackup = downloadBackup;
+        window.restoreBackup = restoreBackup;
 
         // Show alert message
         function showAlert(type, message) {

@@ -298,12 +298,14 @@ class BackupController extends Controller
                 ], 500);
             }
 
-            // データベースファイルを探す
+            // データベースファイルとファイルバックアップを探す
             $databaseFile = null;
+            $filesBackupZip = null;
             foreach ($downloadResult['files'] as $file) {
                 if ($file['type'] === 'database') {
                     $databaseFile = $file['local_path'];
-                    break;
+                } elseif ($file['type'] === 'files') {
+                    $filesBackupZip = $file['local_path'];
                 }
             }
 
@@ -317,21 +319,28 @@ class BackupController extends Controller
             // データベースを復元
             $restoreResult = $this->backupService->restoreDatabase($databaseFile, $createBackupFirst);
 
-            if ($restoreResult['success']) {
-                // クリーンアップ
-                $this->backupService->cleanupRestoreFiles($timestamp);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'データベースの復元が完了しました',
-                    'result' => $restoreResult,
-                ]);
-            } else {
+            if (! $restoreResult['success']) {
                 return response()->json([
                     'success' => false,
                     'error' => $restoreResult['error'],
                 ], 500);
             }
+
+            // ファイルを復元
+            $filesRestoreResult = ['success' => true, 'message' => 'ファイルバックアップが見つかりませんでした'];
+            if ($filesBackupZip) {
+                $filesRestoreResult = $this->backupService->restoreFiles($filesBackupZip);
+            }
+
+            // クリーンアップ
+            $this->backupService->cleanupRestoreFiles($timestamp);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'データベースとファイルの復元が完了しました',
+                'database_restore' => $restoreResult,
+                'files_restore' => $filesRestoreResult,
+            ]);
 
         } catch (Exception $e) {
             Log::error('Database restore failed from settings panel', [
