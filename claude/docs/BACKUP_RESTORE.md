@@ -96,16 +96,34 @@ docker exec shin-on_wiki_app_1 php artisan migrate
 
 ### 5. mysqldump のインストール (Docker環境)
 
-アプリケーションコンテナに `mysqldump` をインストール:
+**✅ このプロジェクトでは既に対応済みです。**
 
+`dev/docker/Dockerfile` に `default-mysql-client` が含まれているため、Dockerイメージのビルド時に自動的に `mysqldump` がインストールされます。
+
+確認方法:
+```bash
+docker exec shin-on_wiki_app_1 which mysqldump
+# /usr/bin/mysqldump
+
+docker exec shin-on_wiki_app_1 mysqldump --version
+# mysqldump from 11.8.3-MariaDB, client 10.19 for debian-linux-gnu (aarch64)
+```
+
+**参考: 手動でインストールする場合**
+
+別のDockerプロジェクトで `mysqldump` がインストールされていない場合は、以下のように対応できます：
+
+一時的にインストール（コンテナ再作成で消える）:
 ```bash
 docker exec shin-on_wiki_app_1 apt-get update
 docker exec shin-on_wiki_app_1 apt-get install -y default-mysql-client
 ```
 
-**永続化するには** `Dockerfile` に追加:
+永続化するには `Dockerfile` に追加:
 ```dockerfile
-RUN apt-get update && apt-get install -y default-mysql-client
+RUN apt-get update && \
+    apt-get install -y default-mysql-client && \
+    rm -rf /var/lib/apt/lists/*
 ```
 
 ### 6. Web UIからの初回認証

@@ -185,6 +185,22 @@ which mysqldump
 # /usr/bin/mysqldump
 ```
 
+**Docker環境での対応:**
+
+Dockerコンテナ内でバックアップ機能を使用する場合、`mysqldump`がインストールされている必要があります。
+
+このプロジェクトでは、`dev/docker/Dockerfile`に以下が含まれています：
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install -y \
+        # ... 他のパッケージ ...
+        default-mysql-client && \
+    rm -rf /var/lib/apt/lists/*
+```
+
+これにより、`mysqldump`コマンドがDockerイメージに含まれます。
+
 ### Node.js & NPM
 
 | 項目 | 要件 |

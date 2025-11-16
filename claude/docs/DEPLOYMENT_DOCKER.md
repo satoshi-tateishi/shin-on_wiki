@@ -934,6 +934,61 @@ docker network prune
 docker compose -f docker-compose.production.yml up -d
 ```
 
+### バックアップエラー
+
+#### エラー: `mysqldump: not found`
+
+バックアップ実行時に以下のエラーが発生する場合：
+
+```
+失敗: Database backup failed: sh: 1: mysqldump: not found
+```
+
+**原因**: Dockerコンテナ内に `mysqldump` がインストールされていない
+
+**解決方法**:
+
+このプロジェクトでは、`dev/docker/Dockerfile`に既に`default-mysql-client`が含まれているため、イメージを再ビルドすることで解決します：
+
+```bash
+# コンテナを停止
+docker compose -f docker-compose.production.yml down
+
+# イメージを再ビルド
+docker compose -f docker-compose.production.yml build
+
+# コンテナを起動
+docker compose -f docker-compose.production.yml up -d
+
+# mysqldump が利用可能か確認
+docker compose -f docker-compose.production.yml exec app which mysqldump
+# /usr/bin/mysqldump
+
+docker compose -f docker-compose.production.yml exec app mysqldump --version
+# mysqldump from 11.8.3-MariaDB
+```
+
+**参考**: 別のDockerプロジェクトで同じエラーが発生する場合は、`Dockerfile`に以下を追加：
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install -y default-mysql-client && \
+    rm -rf /var/lib/apt/lists/*
+```
+
+#### その他のバックアップエラー
+
+```bash
+# ディスク容量を確認
+df -h
+
+# バックアップログを確認
+docker compose -f docker-compose.production.yml exec app tail -f storage/logs/laravel.log
+
+# ストレージディレクトリの権限を確認
+docker compose -f docker-compose.production.yml exec app ls -la storage/app/backups
+```
+
 ---
 
 ## セキュリティ推奨事項
@@ -1015,6 +1070,6 @@ sudo systemctl start fail2ban
 
 ---
 
-**最終更新**: 2025-01-XX
+**最終更新**: 2025年11月17日
 **バージョン**: 1.0.0
 **対象BookStackバージョン**: v25.11

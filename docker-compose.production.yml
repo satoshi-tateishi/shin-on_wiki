@@ -147,6 +147,10 @@ networks:
 # データベースバックアップ:
 #   docker-compose -f docker-compose.production.yml exec app php artisan backup:dropbox
 #
+# バックアップ環境確認 (mysqldump):
+#   docker-compose -f docker-compose.production.yml exec app which mysqldump
+#   docker-compose -f docker-compose.production.yml exec app mysqldump --version
+#
 # コンテナ内でコマンド実行:
 #   docker-compose -f docker-compose.production.yml exec app php artisan migrate
 #
@@ -211,6 +215,16 @@ networks:
 #
 # データベース接続エラー:
 #   docker-compose -f docker-compose.production.yml exec app php artisan db:show
+#
+# バックアップエラー (mysqldump: not found):
+#   # mysqldumpが利用可能か確認
+#   docker-compose -f docker-compose.production.yml exec app which mysqldump
+#   docker-compose -f docker-compose.production.yml exec app mysqldump --version
+#
+#   # イメージを再ビルド（Dockerfileにdefault-mysql-clientが含まれている）
+#   docker-compose -f docker-compose.production.yml down
+#   docker-compose -f docker-compose.production.yml build --no-cache
+#   docker-compose -f docker-compose.production.yml up -d
 #
 # ポート競合エラー:
 #   .env の APP_PORT を変更

@@ -11,7 +11,8 @@ RUN apt-get update && \
         libldap2-dev \
         libpng-dev \
         libzip-dev \
-        wait-for-it && \
+        wait-for-it \
+        default-mysql-client && \
     rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
