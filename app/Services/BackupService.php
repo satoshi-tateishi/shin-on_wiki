@@ -769,9 +769,14 @@ class BackupService
             // 一時ディレクトリを削除
             File::deleteDirectory($tempExtractDir);
 
+            // カバー画像のサムネイルを再生成
+            Log::info('Starting thumbnail regeneration after restore');
+            $thumbnailResult = $this->regenerateCoverThumbnails();
+
             return [
                 'success' => true,
                 'message' => 'ファイルの復元が完了しました',
+                'thumbnail_regeneration' => $thumbnailResult,
             ];
 
         } catch (Exception $e) {
@@ -784,6 +789,127 @@ class BackupService
             if (isset($tempExtractDir) && File::exists($tempExtractDir)) {
                 File::deleteDirectory($tempExtractDir);
             }
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * カバー画像のサムネイルを再生成
+     */
+    public function regenerateCoverThumbnails(): array
+    {
+        try {
+            $regenerated = [
+                'bookshelves' => [],
+                'books' => [],
+                'errors' => [],
+            ];
+
+            // BookStackのクラスを使用
+            $bookshelfClass = \BookStack\Entities\Models\Bookshelf::class;
+            $bookClass = \BookStack\Entities\Models\Book::class;
+            $imageResizerClass = \BookStack\Uploads\ImageResizer::class;
+
+            // 本棚のカバー画像サムネイルを再生成
+            $shelves = $bookshelfClass::whereHas('relatedData', function ($q) {
+                $q->whereNotNull('image_id');
+            })->get();
+
+            $resizer = app($imageResizerClass);
+
+            foreach ($shelves as $shelf) {
+                try {
+                    $image = $shelf->coverInfo()->getImage();
+                    if ($image) {
+                        // 各サイズのサムネイルを生成
+                        $resizer->resizeToThumbnailUrl($image, 250, 250, false, true);
+                        $resizer->resizeToThumbnailUrl($image, 150, 150, false, true);
+                        $resizer->resizeToThumbnailUrl($image, 440, 250, false, true);
+
+                        $regenerated['bookshelves'][] = [
+                            'id' => $shelf->id,
+                            'name' => $shelf->name,
+                            'image_id' => $image->id,
+                        ];
+
+                        Log::info('Regenerated bookshelf cover thumbnails', [
+                            'shelf_id' => $shelf->id,
+                            'shelf_name' => $shelf->name,
+                            'image_id' => $image->id,
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    $regenerated['errors'][] = [
+                        'type' => 'bookshelf',
+                        'id' => $shelf->id,
+                        'name' => $shelf->name,
+                        'error' => $e->getMessage(),
+                    ];
+
+                    Log::error('Failed to regenerate bookshelf cover thumbnails', [
+                        'shelf_id' => $shelf->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // 本のカバー画像サムネイルを再生成
+            $books = $bookClass::whereHas('relatedData', function ($q) {
+                $q->whereNotNull('image_id');
+            })->get();
+
+            foreach ($books as $book) {
+                try {
+                    $image = $book->coverInfo()->getImage();
+                    if ($image) {
+                        // 各サイズのサムネイルを生成
+                        $resizer->resizeToThumbnailUrl($image, 250, 250, false, true);
+                        $resizer->resizeToThumbnailUrl($image, 150, 150, false, true);
+                        $resizer->resizeToThumbnailUrl($image, 440, 250, false, true);
+
+                        $regenerated['books'][] = [
+                            'id' => $book->id,
+                            'name' => $book->name,
+                            'image_id' => $image->id,
+                        ];
+
+                        Log::info('Regenerated book cover thumbnails', [
+                            'book_id' => $book->id,
+                            'book_name' => $book->name,
+                            'image_id' => $image->id,
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    $regenerated['errors'][] = [
+                        'type' => 'book',
+                        'id' => $book->id,
+                        'name' => $book->name,
+                        'error' => $e->getMessage(),
+                    ];
+
+                    Log::error('Failed to regenerate book cover thumbnails', [
+                        'book_id' => $book->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return [
+                'success' => true,
+                'regenerated' => $regenerated,
+                'total_bookshelves' => count($regenerated['bookshelves']),
+                'total_books' => count($regenerated['books']),
+                'total_errors' => count($regenerated['errors']),
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Thumbnail regeneration failed', [
+                'error' => $e->getMessage(),
+            ]);
 
             return [
                 'success' => false,

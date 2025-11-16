@@ -485,6 +485,152 @@ $image = $this->imageRepo->saveNew($coverImage, $imageType, $entity->id, 384, 38
 
 ---
 
+## Dropbox復元後の自動サムネイル再生成機能
+
+### 変更日
+
+2025年11月16日
+
+### 問題
+
+Dropbox復元テスト後、本棚や本のカバー画像が表示されない問題が発生しました。
+
+**原因**:
+- データベースと元画像ファイルは復元されるが、サムネイル画像（thumbs-150-150、thumbs-250-250など）は含まれていない
+- BookStackはカバー画像を表示する際、元画像から生成されたサムネイルを使用
+- 復元時にサムネイルが自動再生成されないため、画像が表示されない
+
+### 実装した解決策
+
+#### 1. サムネイル再生成メソッドの追加
+
+**ファイル**: `app/Services/BackupService.php`
+
+**追加メソッド**: `regenerateCoverThumbnails()`
+- すべての本棚（Bookshelf）と本（Book）のカバー画像サムネイルを再生成
+- 3種類のサイズを生成（150x150、250x250、440x250）
+- エラーハンドリングと詳細ログ記録
+
+**コード**:
+```php
+public function regenerateCoverThumbnails(): array
+{
+    // 本棚と本のカバー画像を取得し、
+    // ImageResizerを使用してサムネイルを再生成
+    // 詳細は app/Services/BackupService.php:798-914 を参照
+}
+```
+
+#### 2. 復元プロセスへの統合
+
+**ファイル**: `app/Services/BackupService.php`
+
+**変更メソッド**: `restoreFiles()`
+- ファイル復元後に自動的に `regenerateCoverThumbnails()` を呼び出し
+
+**変更内容**:
+```php
+// 一時ディレクトリを削除
+File::deleteDirectory($tempExtractDir);
+
+// カバー画像のサムネイルを再生成
+Log::info('Starting thumbnail regeneration after restore');
+$thumbnailResult = $this->regenerateCoverThumbnails();
+
+return [
+    'success' => true,
+    'message' => 'ファイルの復元が完了しました',
+    'thumbnail_regeneration' => $thumbnailResult,
+];
+```
+
+#### 3. 手動実行用コマンドの追加
+
+**新規ファイル**: `app/Console/Commands/RegenerateThumbnailsCommand.php`
+
+**コマンド**: `bookstack:regenerate-thumbnails`
+
+**使用方法**:
+```bash
+docker exec shin-on_wiki_app_1 php artisan bookstack:regenerate-thumbnails
+```
+
+**出力例**:
+```
+🔄 Starting thumbnail regeneration...
+
+✅ Thumbnail regeneration completed successfully!
+
+📊 Summary:
+  📚 Bookshelves: 2 regenerated
+  📖 Books: 3 regenerated
+```
+
+### 技術的な詳細
+
+#### サムネイル生成のサイズ
+
+| サイズ | 用途 |
+|--------|------|
+| 150x150 | グリッド表示用 |
+| 250x250 | プレビュー/編集画面用 |
+| 440x250 | ヘッダー/大きめの表示用 |
+
+#### 処理フロー
+
+```
+1. データベースクエリでカバー画像を持つエンティティを取得
+   ↓
+2. 各エンティティについて
+   ↓
+3. ImageResizerを使用してサムネイルを生成
+   ↓
+4. public/uploads/images/cover_*/YYYY-MM/thumbs-WxH/ に保存
+   ↓
+5. 成功/失敗をログに記録
+```
+
+#### エラーハンドリング
+
+- 個別のエンティティでエラーが発生しても、他のエンティティの処理は継続
+- すべてのエラーは配列として返され、ログに記録される
+- 部分的な失敗でも、成功した分は完了として扱われる
+
+### 設計の選択
+
+**サムネイルをバックアップに含めない理由**:
+1. **効率性**: サムネイルは元画像から機械的に生成できるデータ
+2. **ストレージ節約**: バックアップサイズを大幅に削減
+3. **一貫性**: 常に最新のサムネイル生成ロジックが適用される
+4. **保守性**: 元画像さえあればいつでもサムネイルを再生成可能
+
+### 影響
+
+**プラス面**:
+- ✅ Dropbox復元後にカバー画像が自動的に表示される
+- ✅ 手動でのサムネイル再生成も可能
+- ✅ バックアップサイズが小さく保たれる
+- ✅ 詳細なログ記録で問題の追跡が容易
+
+**注意点**:
+- ⚠️ 復元時に数分程度の追加時間が必要（画像数による）
+- ⚠️ 元画像が破損している場合、サムネイル再生成に失敗する可能性
+
+### テスト結果
+
+復元テストで以下を確認：
+- ✅ 本棚 "QLab" のカバー画像が正しく表示される
+- ✅ 本棚 "Live" のカバー画像が正しく表示される
+- ✅ 3冊の本のカバー画像が正しく表示される
+- ✅ 各サイズのサムネイルが正しく生成される
+
+### ドキュメント
+
+新規作成:
+- `claude/docs/BACKUP_RESTORE.md` - バックアップ・復元の完全ガイド
+
+---
+
 ## バージョン
 
-BookStack v25.11 + LINE WORKS SSO統合
+BookStack v25.11 + LINE WORKS SSO統合 + Dropbox復元機能拡張

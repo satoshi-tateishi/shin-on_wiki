@@ -41,6 +41,7 @@ php artisan serve --host=0.0.0.0 --port=8083
 | **[クイックスタートガイド](./claude/docs/README_LINEWORKS.md)** | セットアップ手順、環境変数設定 | 初めてセットアップする人 |
 | **[詳細実装ドキュメント](./claude/docs/LINEWORKS_SSO_SETUP.md)** | 実装の詳細、認証フロー、セキュリティ | 開発者、技術担当者 |
 | **[変更内容サマリー](./claude/docs/CHANGES.md)** | 変更箇所の一覧、技術的課題と解決策 | コードレビュー担当者 |
+| **[バックアップ・復元ガイド](./claude/docs/BACKUP_RESTORE.md)** | Dropboxバックアップ・復元、サムネイル再生成 | システム運用担当者 |
 
 ### 📖 推奨される読む順番
 
@@ -52,6 +53,9 @@ php artisan serve --host=0.0.0.0 --port=8083
 
 3. **トラブルシューティングの場合**
    - [クイックスタートガイド](./claude/docs/README_LINEWORKS.md) の「よくある問題」セクション
+
+4. **バックアップ・復元の場合**
+   - [バックアップ・復元ガイド](./claude/docs/BACKUP_RESTORE.md)
 
 ## 🎯 主な機能
 
@@ -71,6 +75,12 @@ php artisan serve --host=0.0.0.0 --port=8083
 - ✅ メールドメインベースの認証
 - ✅ shin-on1981ドメインのユーザーのみログイン可能
 - ✅ 不正アクセスの自動拒否
+
+### Dropboxバックアップ・復元
+- ✅ 自動Dropboxバックアップ（データベース + ファイル）
+- ✅ Dropboxからの復元
+- ✅ 復元後の自動サムネイル再生成
+- ✅ 手動サムネイル再生成コマンド
 
 ## 🔧 技術スタック
 
@@ -98,7 +108,8 @@ shin-on_wiki/
 │       ├── README.md           # ドキュメント目次
 │       ├── README_LINEWORKS.md # クイックスタートガイド
 │       ├── LINEWORKS_SSO_SETUP.md # 詳細実装ドキュメント
-│       └── CHANGES.md          # 変更内容サマリー
+│       ├── CHANGES.md          # 変更内容サマリー
+│       └── BACKUP_RESTORE.md   # バックアップ・復元ガイド
 ├── .env                        # 環境変数（LINE WORKS設定含む）
 ├── README.md                   # このファイル
 └── README_BOOKSTACK_ORIGINAL.md # オリジナルのBookStack README
@@ -249,7 +260,7 @@ LINE WORKSはJWKSエンドポイントを提供していないため、JWT署名
 - **プロジェクト名**: shin-on_wiki
 - **BookStack バージョン**: v25.11
 - **PHP バージョン**: 8.4.3
-- **最終更新日**: 2025年11月11日
+- **最終更新日**: 2025年11月16日
 
 ## 👥 作成者
 
