@@ -482,12 +482,312 @@ public function generateBackupPath(string $timestamp, string $fileName): string
 
 ---
 
+---
+
+## 本番環境での運用
+
+### 本番環境セットアップ
+
+本番環境（Ubuntu on-premises）では、Docker を使用しないため、コマンドの実行方法が異なります。
+
+#### 1. mysqldump の確認
+
+```bash
+# mysqldump が利用可能か確認
+which mysqldump
+# /usr/bin/mysqldump
+
+# インストールされていない場合
+sudo apt install mysql-client
+```
+
+#### 2. 環境変数の設定
+
+本番環境の `.env` ファイルに以下を設定:
+
+```bash
+# 本番環境のドメイン
+APP_URL=https://your-domain.com
+
+# Dropbox設定
+DROPBOX_CLIENT_ID=your_production_app_key
+DROPBOX_CLIENT_SECRET=your_production_app_secret
+DROPBOX_REDIRECT_URI="${APP_URL}/auth/dropbox/callback"
+DROPBOX_BACKUP_FOLDER=/shin-on_wiki-backup
+DROPBOX_ACCESS_TOKEN_LIFETIME=14400
+
+# バックアップ設定
+BACKUP_TIMEZONE=Asia/Tokyo
+BACKUP_RETENTION_DAYS=30
+```
+
+#### 3. Dropbox OAuth リダイレクト URI の更新
+
+[Dropbox App Console](https://www.dropbox.com/developers/apps) で、本番環境のURLを追加:
+
+```
+https://your-domain.com/auth/dropbox/callback
+```
+
+#### 4. Web UI からの認証
+
+1. 本番環境にログイン（管理者）
+2. 設定 > 機能 に移動
+3. 「Dropboxと連携」ボタンをクリック
+4. Dropbox認証を完了
+
+### 自動バックアップの設定（Cron）
+
+#### cronジョブの作成
+
+```bash
+# www-dataユーザーのcrontabを編集
+sudo crontab -e -u www-data
+
+# 以下の行を追加（毎日午前2時にバックアップ）
+0 2 * * * cd /var/www/shin-on_wiki && php artisan backup:dropbox >> /dev/null 2>&1
+```
+
+#### バックアップスケジュール例
+
+| 時刻 | 頻度 | 用途 |
+|---|---|---|
+| 02:00 | 毎日 | 定期バックアップ |
+| 14:00 | 毎週日曜 | 週次バックアップ |
+| 03:00 | 毎月1日 | 月次バックアップ |
+
+**複数スケジュール設定例:**
+```cron
+# 毎日午前2時: 通常バックアップ
+0 2 * * * cd /var/www/shin-on_wiki && php artisan backup:dropbox
+
+# 毎週日曜午後2時: 週次バックアップ
+0 14 * * 0 cd /var/www/shin-on_wiki && php artisan backup:dropbox
+
+# 毎月1日午前3時: 月次バックアップ
+0 3 1 * * cd /var/www/shin-on_wiki && php artisan backup:dropbox
+```
+
+#### cron ログの確認
+
+```bash
+# cronログを確認
+sudo tail -f /var/log/syslog | grep CRON
+
+# アプリケーションログで成功/失敗を確認
+sudo tail -f /var/www/shin-on_wiki/storage/logs/laravel.log
+```
+
+### コマンド実行方法（本番環境）
+
+本番環境では Docker を使用しないため、直接 `php artisan` を実行します。
+
+#### 開発環境 vs 本番環境
+
+| 操作 | 開発環境 (Docker) | 本番環境 (Ubuntu) |
+|---|---|---|
+| **バックアップ実行** | `docker exec shin-on_wiki_app_1 php artisan backup:dropbox` | `php artisan backup:dropbox` |
+| **バックアップテスト** | `docker exec shin-on_wiki_app_1 php artisan backup:dropbox --test` | `php artisan backup:dropbox --test` |
+| **サムネイル再生成** | `docker exec shin-on_wiki_app_1 php artisan bookstack:regenerate-thumbnails` | `php artisan bookstack:regenerate-thumbnails` |
+
+#### 本番環境での実行例
+
+```bash
+# アプリケーションディレクトリに移動
+cd /var/www/shin-on_wiki
+
+# バックアップ実行（www-dataユーザーで）
+sudo -u www-data php artisan backup:dropbox
+
+# バックアップテスト
+sudo -u www-data php artisan backup:dropbox --test
+
+# サムネイル再生成
+sudo -u www-data php artisan bookstack:regenerate-thumbnails
+```
+
+### ファイルパーミッションの確認
+
+バックアップが正常に動作するために、適切なパーミッションを設定:
+
+```bash
+# storage ディレクトリ
+sudo chown -R www-data:www-data /var/www/shin-on_wiki/storage
+sudo chmod -R 775 /var/www/shin-on_wiki/storage
+
+# backups ディレクトリ（自動作成される）
+sudo chown -R www-data:www-data /var/www/shin-on_wiki/storage/app/backups
+sudo chmod -R 775 /var/www/shin-on_wiki/storage/app/backups
+
+# public/uploads ディレクトリ
+sudo chown -R www-data:www-data /var/www/shin-on_wiki/public/uploads
+sudo chmod -R 775 /var/www/shin-on_wiki/public/uploads
+```
+
+### ディスク容量の監視
+
+バックアップファイルはローカルに一時保存されるため、ディスク容量を監視:
+
+```bash
+# 現在のディスク使用量
+df -h /var/www/shin-on_wiki
+
+# バックアップディレクトリのサイズ
+du -sh /var/www/shin-on_wiki/storage/app/backups
+
+# アップロードファイルのサイズ
+du -sh /var/www/shin-on_wiki/public/uploads
+
+# データベースサイズ
+mysql -u bookstack -p -e "SELECT table_schema AS 'Database', ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)' FROM information_schema.tables WHERE table_schema = 'shin_on_wiki' GROUP BY table_schema;"
+```
+
+#### ディスク容量アラートの設定（推奨）
+
+```bash
+# ディスク使用量が80%を超えたらメール送信
+sudo crontab -e
+
+# 以下を追加
+0 8 * * * df -h / | awk 'NR==2 {if ($5+0 > 80) print "Disk usage: " $5}' | mail -s "Disk Alert" admin@your-domain.com
+```
+
+### バックアップの検証
+
+定期的にバックアップが正常に動作しているか確認:
+
+```bash
+# 最新のバックアップファイルを確認
+ls -lht /var/www/shin-on_wiki/storage/app/backups | head -5
+
+# バックアップログを確認
+sudo grep -i "backup" /var/www/shin-on_wiki/storage/logs/laravel.log | tail -20
+
+# Dropbox にアップロードされたか確認（Web UI）
+# https://www.dropbox.com/ にログインして /shin-on_wiki-backup を確認
+```
+
+### 復元テスト（推奨）
+
+少なくとも月に1回、復元テストを実施:
+
+1. **ステージング環境を用意**（本番環境とは別のサーバー）
+2. **最新のバックアップを復元**
+3. **動作確認**
+   - ログインできるか
+   - ページが表示されるか
+   - 画像が表示されるか
+   - 検索が動作するか
+
+```bash
+# ステージング環境での復元例
+cd /var/www/shin-on_wiki-staging
+
+# Dropboxから最新バックアップをダウンロード
+# (Web UIで実行)
+
+# 復元実行
+sudo -u www-data php artisan backup:restore database /path/to/database.sql
+sudo -u www-data php artisan backup:restore files /path/to/files.zip
+```
+
+### トラブルシューティング（本番環境）
+
+#### 問題: バックアップが失敗する
+
+**原因1: mysqldump が見つからない**
+```bash
+# 確認
+which mysqldump
+
+# インストール
+sudo apt install mysql-client
+```
+
+**原因2: ディスク容量不足**
+```bash
+# 確認
+df -h
+
+# 古いバックアップを削除
+sudo -u www-data php artisan backup:cleanup
+```
+
+**原因3: パーミッション不足**
+```bash
+# 修正
+sudo chown -R www-data:www-data /var/www/shin-on_wiki/storage
+sudo chmod -R 775 /var/www/shin-on_wiki/storage/app/backups
+```
+
+#### 問題: cron が実行されない
+
+```bash
+# cron サービスが動作しているか確認
+sudo systemctl status cron
+
+# cron ログを確認
+sudo tail -f /var/log/syslog | grep CRON
+
+# cronジョブが設定されているか確認
+sudo crontab -l -u www-data
+```
+
+#### 問題: Dropbox アップロードが失敗
+
+```bash
+# トークンの有効期限を確認（ログから）
+sudo grep "Dropbox" /var/www/shin-on_wiki/storage/logs/laravel.log | tail -20
+
+# 再認証が必要な場合
+# Web UI から「Dropboxと連携」を再実行
+```
+
+### セキュリティ考慮事項
+
+1. **バックアップファイルの保護**
+   - ローカルバックアップは一時的（Dropboxアップロード後に削除）
+   - `.env` ファイルが含まれるため、パーミッション600で保護
+
+2. **Dropbox アクセス制御**
+   - Dropbox のアクセストークンはデータベースに暗号化保存
+   - アクセストークンは14400秒（4時間）で自動リフレッシュ
+
+3. **復元前のバックアップ**
+   - 復元前に自動的に現在の状態をバックアップ
+   - 誤操作からの保護
+
+### パフォーマンス最適化
+
+#### バックアップ時間の短縮
+
+大規模なデータベースの場合、圧縮オプションを調整:
+
+```bash
+# config/backup.php で調整（将来の機能）
+'compression' => 'gzip',  // 'none', 'gzip', 'bzip2'
+```
+
+#### Dropbox アップロード速度
+
+```bash
+# ネットワーク帯域幅を確認
+speedtest-cli
+
+# アップロード速度が遅い場合、複数ファイルに分割（将来の機能）
+```
+
+---
+
 ## 関連ドキュメント
 
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - デプロイメント手順
+- [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - デプロイチェックリスト
+- [SYSTEM_REQUIREMENTS.md](./SYSTEM_REQUIREMENTS.md) - システム要件
 - [プロジェクトREADME](../README.md)
 - [claudeディレクトリREADME](../../README.md)
 
 ---
 
-**最終更新**: 2025年11月16日
+**最終更新**: 2025年11月17日
 **作成者**: Claude Code + satoshi

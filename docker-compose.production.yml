@@ -1,0 +1,222 @@
+# ==============================================================
+# shin·on Wiki by BookStack - 本番環境用 Docker Compose 設定
+# ==============================================================
+#
+# 本番環境でDockerを使用する際の設定ファイルです。
+#
+# 使用方法:
+#   docker-compose -f docker-compose.production.yml up -d
+#
+# 注意事項:
+#   - .env ファイルで環境変数を設定してください
+#   - SSL/HTTPS はホストOSのApache/Nginxで処理します
+#   - このファイルは開発用サービス（mailhog等）を含みません
+#
+# ==============================================================
+
+version: '3.8'
+
+volumes:
+  # データベースデータの永続化
+  db_data:
+
+services:
+  # ==============================================================
+  # データベース (MySQL 8.4)
+  # ==============================================================
+  db:
+    image: mysql:8.4
+    container_name: ${COMPOSE_PROJECT_NAME:-shin-on_wiki}_db
+    restart: unless-stopped
+
+    # ポート公開（ホストOSからのアクセス用、オプション）
+    # セキュリティのためコメントアウトを推奨
+    # ports:
+    #   - '3306:3306'
+
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-shin_on_wiki}
+      MYSQL_USER: ${DB_USERNAME:-bookstack}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: 'true'
+
+    volumes:
+      # データベースデータの永続化
+      - db_data:/var/lib/mysql
+
+    # ヘルスチェック
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    # リソース制限（必要に応じて調整）
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==============================================================
+  # アプリケーション (BookStack)
+  # ==============================================================
+  app:
+    build:
+      context: .
+      dockerfile: ./dev/docker/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-shin-on_wiki}_app
+    restart: unless-stopped
+
+    # ポート公開（ホストOSのリバースプロキシからアクセス）
+    ports:
+      - '${APP_PORT:-8083}:80'
+
+    # 環境変数は.envファイルから自動読み込み
+    # APP_URLのハードコードは削除（.envの値を使用）
+    environment:
+      # データベース接続（docker-compose内部ネットワーク）
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-shin_on_wiki}
+      DB_USERNAME: ${DB_USERNAME:-bookstack}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # メール設定（.envから読み込み）
+      MAIL_DRIVER: ${MAIL_DRIVER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-localhost}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
+
+    volumes:
+      # アプリケーションコード（本番環境では読み取り専用推奨）
+      - ./:/app:ro
+
+      # 書き込み可能なディレクトリのみ読み書き可能
+      - ./storage:/app/storage
+      - ./public/uploads:/app/public/uploads
+      - ./bootstrap/cache:/app/bootstrap/cache
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # リソース制限（必要に応じて調整）
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+    # ログ設定
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ==============================================================
+# ネットワーク設定
+# ==============================================================
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME:-shin-on_wiki}_network
+
+# ==============================================================
+# 使用例
+# ==============================================================
+#
+# 起動:
+#   docker-compose -f docker-compose.production.yml up -d
+#
+# 停止:
+#   docker-compose -f docker-compose.production.yml down
+#
+# ログ確認:
+#   docker-compose -f docker-compose.production.yml logs -f app
+#
+# データベースバックアップ:
+#   docker-compose -f docker-compose.production.yml exec app php artisan backup:dropbox
+#
+# コンテナ内でコマンド実行:
+#   docker-compose -f docker-compose.production.yml exec app php artisan migrate
+#
+# ==============================================================
+
+# ==============================================================
+# 複数アプリケーション運用時の注意事項
+# ==============================================================
+#
+# 同じサーバーで複数のアプリケーションをDocker運用する場合:
+#
+# 1. プロジェクト名を設定（.envファイル）:
+#    COMPOSE_PROJECT_NAME=shin-on_wiki
+#
+# 2. ポート番号を変更（.envファイル）:
+#    APP_PORT=8083  # アプリ1
+#    APP_PORT=8084  # アプリ2
+#    APP_PORT=8085  # アプリ3
+#
+# 3. ホストOSのApache/Nginxで各ポートにプロキシ:
+#    wiki.example.com    → localhost:8083
+#    app2.example.com    → localhost:8084
+#    app3.example.com    → localhost:8085
+#
+# 4. 各アプリケーションのコンテナ名・ネットワーク名が重複しないよう、
+#    COMPOSE_PROJECT_NAME で区別してください。
+#
+# ==============================================================
+
+# ==============================================================
+# セキュリティ推奨事項
+# ==============================================================
+#
+# 1. データベースポートを公開しない
+#    - ports セクションをコメントアウト
+#    - アプリケーションからのみアクセス可能
+#
+# 2. アプリケーションコードを読み取り専用にマウント
+#    - volumes: ./:/app:ro
+#    - 書き込みが必要なディレクトリのみ個別にマウント
+#
+# 3. リソース制限を設定
+#    - CPUとメモリの上限を設定
+#    - 他のアプリケーションへの影響を最小化
+#
+# 4. ログローテーション設定
+#    - max-size と max-file で制限
+#    - ディスク容量の枯渇を防止
+#
+# 5. 環境変数を.envファイルで管理
+#    - パスワード等の機密情報をコード化しない
+#    - .envファイルはgit管理対象外
+#
+# ==============================================================
+
+# ==============================================================
+# トラブルシューティング
+# ==============================================================
+#
+# コンテナが起動しない:
+#   docker-compose -f docker-compose.production.yml logs app
+#
+# データベース接続エラー:
+#   docker-compose -f docker-compose.production.yml exec app php artisan db:show
+#
+# ポート競合エラー:
+#   .env の APP_PORT を変更
+#
+# パーミッションエラー:
+#   sudo chown -R www-data:www-data storage bootstrap/cache public/uploads
+#   sudo chmod -R 775 storage bootstrap/cache public/uploads
+#
+# ==============================================================
