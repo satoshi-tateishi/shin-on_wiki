@@ -930,4 +930,154 @@ class BackupService
             Log::info('Cleaned up restore files', ['directory' => $restoreDir]);
         }
     }
+
+    /**
+     * 古いバックアップの削除
+     *
+     * @param bool $dryRun 削除せずに対象のみ表示
+     * @return array
+     */
+    public function cleanupOldBackups(bool $dryRun = false): array
+    {
+        try {
+            Log::info('Starting backup cleanup', ['dry_run' => $dryRun]);
+
+            if (!$this->dropboxService->isAuthenticated()) {
+                return [
+                    'success' => false,
+                    'error' => 'Dropbox not authenticated',
+                ];
+            }
+
+            // 設定を取得
+            $retentionDays = config('backup.retention.days', 30);
+            $minimumCount = config('backup.retention.minimum_count', 3);
+
+            // すべてのバックアップを取得
+            $backups = $this->dropboxService->findBackupFolders();
+
+            if (empty($backups)) {
+                Log::info('No backups found');
+                return [
+                    'success' => true,
+                    'message' => 'No backups found',
+                    'deleted' => [],
+                    'kept' => [],
+                ];
+            }
+
+            // 日付順にソート（新しい順）
+            usort($backups, function ($a, $b) {
+                return strtotime($b['timestamp']) <=> strtotime($a['timestamp']);
+            });
+
+            $totalBackups = count($backups);
+            $toDelete = [];
+            $toKeep = [];
+            $cutoffDate = Carbon::now(config('backup.timezone', 'Asia/Tokyo'))->subDays($retentionDays);
+
+            // 削除対象を決定
+            foreach ($backups as $index => $backup) {
+                $backupDate = Carbon::parse($backup['timestamp']);
+                $isOld = $backupDate->lt($cutoffDate);
+                $isInMinimumRange = $index < $minimumCount;
+
+                if ($isInMinimumRange) {
+                    // 最新N個は必ず保持
+                    $toKeep[] = [
+                        'path' => $backup['path'],
+                        'timestamp' => $backup['timestamp'],
+                        'reason' => 'within minimum retention count',
+                    ];
+                } elseif (!$isOld) {
+                    // 保持期間内は保持
+                    $toKeep[] = [
+                        'path' => $backup['path'],
+                        'timestamp' => $backup['timestamp'],
+                        'reason' => 'within retention period',
+                    ];
+                } else {
+                    // 古いバックアップを削除対象に
+                    $toDelete[] = [
+                        'path' => $backup['path'],
+                        'timestamp' => $backup['timestamp'],
+                        'age_days' => Carbon::now(config('backup.timezone', 'Asia/Tokyo'))->diffInDays($backupDate),
+                    ];
+                }
+            }
+
+            // 削除後も最低保持数を確保
+            $remainingCount = $totalBackups - count($toDelete);
+            if ($remainingCount < $minimumCount) {
+                $excessDelete = $minimumCount - $remainingCount;
+                Log::warning('Adjusting deletion to maintain minimum retention count', [
+                    'excess_delete' => $excessDelete,
+                    'minimum_count' => $minimumCount,
+                ]);
+
+                // 削除対象から新しいものを保持に移動
+                for ($i = 0; $i < $excessDelete && !empty($toDelete); $i++) {
+                    $preserved = array_shift($toDelete);
+                    $toKeep[] = [
+                        'path' => $preserved['path'],
+                        'timestamp' => $preserved['timestamp'],
+                        'reason' => 'adjusted to maintain minimum count',
+                    ];
+                }
+            }
+
+            $result = [
+                'success' => true,
+                'dry_run' => $dryRun,
+                'total_backups' => $totalBackups,
+                'to_delete_count' => count($toDelete),
+                'to_keep_count' => count($toKeep),
+                'retention_days' => $retentionDays,
+                'minimum_count' => $minimumCount,
+                'deleted' => [],
+                'kept' => $toKeep,
+            ];
+
+            // 実際の削除処理（dry_runでない場合のみ）
+            if (!$dryRun && !empty($toDelete)) {
+                $deleted = [];
+                foreach ($toDelete as $backup) {
+                    try {
+                        $this->dropboxService->deleteFolder($backup['path']);
+                        $deleted[] = $backup;
+                        Log::info('Deleted old backup', [
+                            'path' => $backup['path'],
+                            'timestamp' => $backup['timestamp'],
+                            'age_days' => $backup['age_days'],
+                        ]);
+                    } catch (Exception $e) {
+                        Log::error('Failed to delete backup', [
+                            'path' => $backup['path'],
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                $result['deleted'] = $deleted;
+            } else {
+                $result['to_delete'] = $toDelete;
+            }
+
+            Log::info('Backup cleanup completed', [
+                'deleted_count' => count($result['deleted']),
+                'kept_count' => count($toKeep),
+            ]);
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Backup cleanup failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
 }

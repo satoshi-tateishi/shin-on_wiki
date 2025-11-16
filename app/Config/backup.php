@@ -16,6 +16,7 @@ return [
 
     'retention' => [
         'days' => env('BACKUP_RETENTION_DAYS', 30),
+        'minimum_count' => env('BACKUP_MINIMUM_RETENTION_COUNT', 3),
     ],
 
     /*

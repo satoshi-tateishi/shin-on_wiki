@@ -36,6 +36,23 @@ class BackupDropboxCommand extends Command
 
                 $this->displayBackupResults($result['results']);
 
+                // 古いバックアップのクリーンアップ
+                if ($uploadToDropbox) {
+                    $this->info('🧹 Cleaning up old backups...');
+                    $cleanupResult = $backupService->cleanupOldBackups(false);
+
+                    if ($cleanupResult['success']) {
+                        $deletedCount = isset($cleanupResult['deleted']) ? count($cleanupResult['deleted']) : 0;
+                        if ($deletedCount > 0) {
+                            $this->info("✅ Cleaned up {$deletedCount} old backup(s)");
+                        } else {
+                            $this->info('ℹ️  No old backups to clean up');
+                        }
+                    } else {
+                        $this->warn('⚠️  Cleanup failed: ' . ($cleanupResult['error'] ?? 'Unknown error'));
+                    }
+                }
+
                 return Command::SUCCESS;
             } else {
                 $this->error("❌ Backup failed: {$result['error']}");

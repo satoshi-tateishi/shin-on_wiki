@@ -409,4 +409,42 @@ class DropboxService
             throw $e;
         }
     }
+
+    /**
+     * Dropboxからフォルダを削除
+     *
+     * @param string $path Dropbox上のパス
+     * @return bool
+     * @throws Exception
+     */
+    public function deleteFolder(string $path): bool
+    {
+        if (!$this->isAuthenticated()) {
+            throw new Exception('Not authenticated with Dropbox');
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.dropboxapi.com/2/files/delete_v2', [
+                'path' => $path,
+            ]);
+
+            if (!$response->successful()) {
+                throw new Exception('Failed to delete folder: ' . $response->body());
+            }
+
+            Log::info('Dropbox folder deleted', ['path' => $path]);
+
+            return true;
+
+        } catch (Exception $e) {
+            Log::error('Failed to delete Dropbox folder', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
 }

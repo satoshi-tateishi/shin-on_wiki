@@ -416,4 +416,41 @@ class BackupController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 古いバックアップのクリーンアップ
+     */
+    public function cleanupBackups(Request $request)
+    {
+        if (!userCan('settings-manage')) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized',
+            ], 403);
+        }
+
+        try {
+            $dryRun = $request->input('dry_run', false);
+
+            Log::info('Manual backup cleanup initiated', [
+                'user_id' => auth()->id(),
+                'dry_run' => $dryRun,
+            ]);
+
+            $result = $this->backupService->cleanupOldBackups($dryRun);
+
+            return response()->json($result);
+
+        } catch (Exception $e) {
+            Log::error('Backup cleanup failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'クリーンアップ中にエラーが発生しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }

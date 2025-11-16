@@ -320,6 +320,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/backup/download', [\BookStack\Http\Controllers\BackupController::class, 'downloadBackup']);
     Route::post('/api/backup/restore', [\BookStack\Http\Controllers\BackupController::class, 'restoreDatabase']);
     Route::post('/api/backup/validate-restore', [\BookStack\Http\Controllers\BackupController::class, 'validateRestore']);
+    Route::post('/api/backup/cleanup', [\BookStack\Http\Controllers\BackupController::class, 'cleanupBackups']);
 
     // Settings
     Route::get('/settings', [SettingControllers\SettingController::class, 'index'])->name('settings');
