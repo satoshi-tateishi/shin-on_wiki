@@ -606,7 +606,7 @@ ul.pagination {
     margin-inline-end: 0;
     position: absolute;
     bottom: vars.$xs;
-    left: vars.$xs;
+    right: vars.$xs;
   }
 
   @include mixins.smaller-than(vars.$bp-m) {
@@ -810,8 +810,7 @@ ul.pagination {
     margin-inline-end: 0;
     position: absolute;
     bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 10px;
   }
 }
 .grid-card:hover .featured-image-container {

@@ -7013,7 +7013,7 @@ html.dark-mode .entity-list-item-image {
   margin-inline-end: 0;
   position: absolute;
   bottom: 6px;
-  left: 6px;
+  right: 6px;
 }
 html.dark-mode .entity-list-item-image .svg-icon {
   color: rgba(255, 255, 255, 0.6);
@@ -7231,8 +7231,7 @@ html.dark-mode .featured-image-container {
   margin-inline-end: 0;
   position: absolute;
   bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 10px;
 }
 html.dark-mode .featured-image-container-wrap .svg-icon {
   color: rgba(255, 255, 255, 0.6);
