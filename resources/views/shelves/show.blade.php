@@ -37,7 +37,7 @@
                         @endforeach
                     </div>
                 @else
-                    <div class="grid third">
+                    <div class="grid" style="grid-template-columns: repeat(auto-fill, 140px); grid-column-gap: 0; grid-row-gap: 12px;">
                         @foreach($sortedVisibleShelfBooks as $book)
                             @include('entities.grid-item', ['entity' => $book])
                         @endforeach
