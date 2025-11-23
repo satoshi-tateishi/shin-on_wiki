@@ -695,9 +695,6 @@ DB_DATABASE=shin_on_wiki
 DB_USERNAME=bookstack
 DB_PASSWORD=強力なパスワードを設定  # 必ず変更！
 
-# MySQL Root Password
-MYSQL_ROOT_PASSWORD=強力なrootパスワードを設定  # 必ず変更！
-
 # LINE WORKS OIDC設定
 AUTH_METHOD=oidc
 OIDC_NAME="LINE WORKS"
