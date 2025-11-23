@@ -641,7 +641,57 @@ git push origin release
 
 ### 6.1 初回デプロイ
 
-#### プロジェクトディレクトリの作成
+初回デプロイには、**自動化スクリプト**を使用する方法と、**手動**で行う方法があります。
+
+#### 🚀 オプションA: 自動化スクリプトを使用（推奨）
+
+初回デプロイを自動化するスクリプトが用意されています。このスクリプトは以下の全ての手順を自動的に実行します。
+
+**前提条件**:
+- PHP 8.3以上、Composer、Node.js 20.x以上がホスト側にインストール済み
+- プロジェクトがクローン済み
+- `.env`ファイルが設定済み
+
+**実行手順**:
+
+```bash
+# 1. プロジェクトディレクトリに移動
+cd /var/www/shin-on_wiki
+
+# 2. .envファイルを設定（まだの場合）
+cp .env.production.example .env
+nano .env  # APP_URL、DB_PASSWORD等を設定
+
+# 3. 自動化スクリプトを実行
+bash scripts/initial-deploy.sh
+```
+
+スクリプトは以下を自動実行します:
+- ✅ 依存関係の確認（PHP, Composer, Node.js, NPM）
+- ✅ .env ファイルの検証と修正（DB_HOST、APP_KEY）
+- ✅ パーミッション設定
+- ✅ Composer/NPM 依存関係のインストール
+- ✅ アセットのビルド
+- ✅ ストレージリンク作成
+- ✅ Docker イメージのビルドとコンテナ起動
+- ✅ データベースマイグレーション
+- ✅ キャッシュ最適化
+- ✅ 動作確認
+
+> **💡 メリット**
+> - 時間短縮: 30以上の手動ステップが1コマンドに
+> - エラー防止: 各ステップで自動検証
+> - 冪等性: 何度実行しても安全
+
+詳細は [`scripts/README.md`](../../scripts/README.md) を参照してください。
+
+---
+
+#### 📝 オプションB: 手動デプロイ
+
+自動化スクリプトを使わず、手動で各ステップを実行する場合は、以下の手順に従ってください。
+
+##### プロジェクトディレクトリの作成
 
 ```bash
 # プロジェクトを配置するディレクトリを作成
@@ -650,7 +700,7 @@ sudo chown $USER:$USER /var/www
 cd /var/www
 ```
 
-#### リポジトリのクローン
+##### リポジトリのクローン
 
 ```bash
 # SSH経由でクローン（デプロイキーを使用）
@@ -663,7 +713,7 @@ cd shin-on_wiki
 git checkout release
 ```
 
-#### .env設定
+##### .env設定
 
 ```bash
 # 本番環境用の.envファイルをコピー
@@ -732,7 +782,7 @@ LOG_CHANNEL=stack
 LOG_LEVEL=warning
 ```
 
-#### パーミッション設定
+##### パーミッション設定
 
 ```bash
 # .envファイルのパーミッションを制限
@@ -748,7 +798,7 @@ sudo chown -R $USER:$USER public/uploads
 chmod -R 775 public/uploads
 ```
 
-#### ホスト側の依存関係インストール
+##### ホスト側の依存関係インストール
 
 本番環境では、`docker-compose.production.yml`がアプリケーションディレクトリを読み取り専用（`:ro`）でマウントするため、**依存関係をホスト側で事前にインストール**する必要があります。
 
@@ -760,7 +810,7 @@ chmod -R 775 public/uploads
 > - デプロイ時のビルド時間短縮（依存関係は事前にインストール済み）
 > - セキュリティリスクの低減
 
-##### PHP と Composer のインストール
+###### PHP と Composer のインストール
 
 ```bash
 # PHP 8.3とLaravel必須拡張機能をインストール
@@ -780,7 +830,7 @@ sudo mv composer.phar /usr/local/bin/composer
 composer --version
 ```
 
-##### Composer 依存関係のインストール
+###### Composer 依存関係のインストール
 
 ```bash
 # プロジェクトディレクトリに移動
@@ -793,7 +843,7 @@ composer install --no-dev --optimize-autoloader
 ls -la vendor/
 ```
 
-##### Node.js と NPM のインストール
+###### Node.js と NPM のインストール
 
 ```bash
 # Node.js 20.x をインストール
@@ -805,7 +855,7 @@ node --version
 npm --version
 ```
 
-##### NPM 依存関係のインストールとアセットビルド
+###### NPM 依存関係のインストールとアセットビルド
 
 ```bash
 # NPMの依存関係をインストール（開発用も含む - ビルドツールが必要）
@@ -825,7 +875,7 @@ ls -la public/dist/
 > **💡 ビルドに関する注意**
 > `npm run production`を実行するには、`npm-run-all`、`sass`、`esbuild`などのビルドツールが必要です。これらは`devDependencies`に含まれているため、`npm ci`で開発用依存関係も含めてインストールします。ビルド完了後、`npm prune --omit=dev`で開発用依存関係を削除することで、ディスク容量を節約できます。
 
-#### Docker Composeビルド・起動
+##### Docker Composeビルド・起動
 
 ```bash
 # 本番環境用のDocker Composeファイルを使用してビルド
@@ -841,7 +891,7 @@ docker compose -f docker-compose.production.yml ps
 docker compose -f docker-compose.production.yml logs -f app
 ```
 
-#### アプリケーションキー生成
+##### アプリケーションキー生成
 
 ```bash
 # APP_KEYを生成（ホスト側で実行）
@@ -853,7 +903,7 @@ php artisan key:generate
 > **⚠️ 重要**
 > `.env`ファイルは読み取り専用マウントのため、コンテナ内から書き込みできません。ホスト側でコマンドを実行してください。
 
-#### データベースマイグレーション
+##### データベースマイグレーション
 
 ```bash
 # データベースマイグレーションを実行（コンテナ内で実行）
@@ -863,7 +913,7 @@ docker compose -f docker-compose.production.yml exec app php artisan migrate --f
 # docker compose -f docker-compose.production.yml exec app php artisan db:seed --force
 ```
 
-#### ストレージリンク作成
+##### ストレージリンク作成
 
 ```bash
 # publicディレクトリにストレージへのシンボリックリンクを作成（ホスト側で実行）
@@ -873,7 +923,7 @@ php artisan storage:link
 > **⚠️ 重要**
 > `public`ディレクトリも読み取り専用マウントのため、シンボリックリンクの作成はホスト側で実行してください。
 
-#### Dockerコンテナ用のパーミッション設定
+##### Dockerコンテナ用のパーミッション設定
 
 コンテナを起動すると、Apache（www-data, UID=33）がストレージディレクトリに書き込む必要があります。以下のコマンドでパーミッションを修正します。
 
@@ -889,7 +939,7 @@ docker compose -f docker-compose.production.yml restart app
 > **⚠️ 重要**
 > この設定により、コンテナ内のwww-dataユーザー（UID=33）がログやキャッシュファイルを書き込めるようになります。この手順を忘れると、HTTP 500エラーが発生します。
 
-#### キャッシュ最適化
+##### キャッシュ最適化
 
 ```bash
 # キャッシュクリア（コンテナ内で実行）
@@ -904,7 +954,7 @@ docker compose -f docker-compose.production.yml exec app php artisan route:cache
 docker compose -f docker-compose.production.yml exec app php artisan view:cache
 ```
 
-#### 動作確認
+##### 動作確認
 
 ```bash
 # コンテナ内部からアクセステスト
@@ -913,7 +963,7 @@ curl -I http://localhost:8083
 # HTTP 302 Found（ログインページへのリダイレクト）が返ってくればOK
 ```
 
-#### APP_DEBUGを本番モードに戻す
+##### APP_DEBUGを本番モードに戻す
 
 動作確認が完了したら、デバッグモードを無効にします。
 
