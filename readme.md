@@ -267,7 +267,7 @@ LINE WORKSはJWKSエンドポイントを提供していないため、JWT署名
 
 ## 👥 作成者
 
-Claude Code + satoshi
+Claude Code + satoshi (Tateishi)
 
 ## 📄 ライセンス
 
