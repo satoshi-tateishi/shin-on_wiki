@@ -11,6 +11,7 @@ RUN apt-get update && \
         libldap2-dev \
         libpng-dev \
         libzip-dev \
+        libicu-dev \
         wait-for-it \
         default-mysql-client && \
     rm -rf /var/lib/apt/lists/*
@@ -18,7 +19,8 @@ RUN apt-get update && \
 # Install PHP extensions
 RUN docker-php-ext-configure ldap --with-libdir="lib/$(gcc -dumpmachine)" && \
     docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install -j$(nproc) pdo_mysql gd ldap zip && \
+    docker-php-ext-configure intl && \
+    docker-php-ext-install -j$(nproc) pdo_mysql gd ldap zip intl && \
     pecl install xdebug && \
     docker-php-ext-enable xdebug
 
