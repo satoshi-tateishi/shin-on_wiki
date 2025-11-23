@@ -1,0 +1,54 @@
+name: Deploy to Home Server
+
+on:
+  push:
+    branches:
+      - release  # releaseブランチへのpushでトリガー
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # 最新のコードを取得
+            git fetch origin
+            git reset --hard origin/release
+
+            # 依存関係の更新
+            docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
+            docker compose -f docker-compose.production.yml exec -T app npm ci --omit=dev
+
+            # アセットのビルド
+            docker compose -f docker-compose.production.yml exec -T app npm run production
+
+            # データベースマイグレーション
+            docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
+
+            # キャッシュクリア
+            docker compose -f docker-compose.production.yml exec -T app php artisan config:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan cache:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan route:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan view:clear
+
+            # キャッシュ最適化
+            docker compose -f docker-compose.production.yml exec -T app php artisan config:cache
+            docker compose -f docker-compose.production.yml exec -T app php artisan route:cache
+            docker compose -f docker-compose.production.yml exec -T app php artisan view:cache
+
+            # コンテナの再起動（必要な場合）
+            # docker compose -f docker-compose.production.yml restart app
+
+            echo "Deployment completed successfully!"
