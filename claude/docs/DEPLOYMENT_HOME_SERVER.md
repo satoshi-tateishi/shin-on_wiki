@@ -738,9 +738,81 @@ LOG_LEVEL=warning
 # .envファイルのパーミッションを制限
 chmod 600 .env
 
-# ストレージディレクトリのパーミッション
+# ストレージディレクトリのパーミッション設定
+sudo chown -R $USER:$USER storage bootstrap/cache
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
+```
+
+#### ホスト側の依存関係インストール
+
+本番環境では、`docker-compose.production.yml`がアプリケーションディレクトリを読み取り専用（`:ro`）でマウントするため、**依存関係をホスト側で事前にインストール**する必要があります。
+
+> **📝 重要な設計変更**
+> `docker-compose.production.yml`では、セキュリティ強化のためアプリケーションコードを読み取り専用でマウントしています。ただし、`vendor`と`node_modules`ディレクトリは個別に読み書き可能でマウントされるため、ホスト側で事前にインストールした依存関係がコンテナ内でも利用できます。
+>
+> これにより、以下のメリットがあります:
+> - コンテナ内でのファイル変更を最小限に抑える
+> - デプロイ時のビルド時間短縮（依存関係は事前にインストール済み）
+> - セキュリティリスクの低減
+
+##### PHP と Composer のインストール
+
+```bash
+# PHP 8.3とLaravel必須拡張機能をインストール
+sudo apt update
+sudo apt install -y php8.3-cli php8.3-fpm php8.3-mysql php8.3-xml php8.3-mbstring \
+                    php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath php8.3-intl php8.3-redis
+
+# PHPバージョン確認
+php --version
+
+# Composerをインストール
+cd ~
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Composerバージョン確認
+composer --version
+```
+
+##### Composer 依存関係のインストール
+
+```bash
+# プロジェクトディレクトリに移動
+cd /var/www/shin-on_wiki
+
+# 本番環境用の依存関係をインストール（開発用パッケージは除外）
+composer install --no-dev --optimize-autoloader
+
+# vendor ディレクトリが作成されたことを確認
+ls -la vendor/
+```
+
+##### Node.js と NPM のインストール
+
+```bash
+# Node.js 20.x をインストール
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# バージョン確認
+node --version
+npm --version
+```
+
+##### NPM 依存関係のインストールとアセットビルド
+
+```bash
+# NPMの依存関係をインストール（本番環境用、開発用パッケージは除外）
+npm ci --omit=dev
+
+# アセットをビルド（本番環境用）
+npm run build
+
+# node_modules と public/build ディレクトリが作成されたことを確認
+ls -la node_modules/
+ls -la public/build/
 ```
 
 #### Docker Composeビルド・起動

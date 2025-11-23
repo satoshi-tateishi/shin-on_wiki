@@ -27,12 +27,12 @@ jobs:
             git fetch origin
             git reset --hard origin/release
 
-            # 依存関係の更新
-            docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
-            docker compose -f docker-compose.production.yml exec -T app npm ci --omit=dev
+            # 依存関係の更新（ホスト側で実行）
+            composer install --no-dev --optimize-autoloader
+            npm ci --omit=dev
 
-            # アセットのビルド
-            docker compose -f docker-compose.production.yml exec -T app npm run production
+            # アセットのビルド（ホスト側で実行）
+            npm run build
 
             # データベースマイグレーション
             docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force

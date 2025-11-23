@@ -95,13 +95,19 @@ services:
       MAIL_ENCRYPTION: ${MAIL_ENCRYPTION:-tls}
 
     volumes:
-      # アプリケーションコード（本番環境では読み取り専用推奨）
+      # アプリケーションコード
+      # 注: vendorとnode_modulesはホスト側で事前にインストールするため、読み取り専用で問題なし
       - ./:/app:ro
 
       # 書き込み可能なディレクトリのみ読み書き可能
       - ./storage:/app/storage
       - ./public/uploads:/app/public/uploads
       - ./bootstrap/cache:/app/bootstrap/cache
+
+      # vendor と node_modules はホスト側でインストール済みのため読み取り専用でOK
+      # ただし、Laravel内部でvendorへの書き込みが発生する場合があるため、読み書き可能にマウント
+      - ./vendor:/app/vendor
+      - ./node_modules:/app/node_modules
 
     depends_on:
       db:
