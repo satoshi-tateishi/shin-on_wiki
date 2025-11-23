@@ -840,16 +840,19 @@ docker compose -f docker-compose.production.yml logs -f app
 #### アプリケーションキー生成
 
 ```bash
-# APP_KEYを生成
-docker compose -f docker-compose.production.yml exec app php artisan key:generate
+# APP_KEYを生成（ホスト側で実行）
+php artisan key:generate
 
 # .envファイルにAPP_KEYが自動的に設定されます
 ```
 
+> **⚠️ 重要**
+> `.env`ファイルは読み取り専用マウントのため、コンテナ内から書き込みできません。ホスト側でコマンドを実行してください。
+
 #### データベースマイグレーション
 
 ```bash
-# データベースマイグレーションを実行
+# データベースマイグレーションを実行（コンテナ内で実行）
 docker compose -f docker-compose.production.yml exec app php artisan migrate --force
 
 # 初期データのシード（必要に応じて）
@@ -859,8 +862,26 @@ docker compose -f docker-compose.production.yml exec app php artisan migrate --f
 #### ストレージリンク作成
 
 ```bash
-# publicディレクトリにストレージへのシンボリックリンクを作成
-docker compose -f docker-compose.production.yml exec app php artisan storage:link
+# publicディレクトリにストレージへのシンボリックリンクを作成（ホスト側で実行）
+php artisan storage:link
+```
+
+> **⚠️ 重要**
+> `public`ディレクトリも読み取り専用マウントのため、シンボリックリンクの作成はホスト側で実行してください。
+
+#### キャッシュ最適化
+
+```bash
+# キャッシュクリア（コンテナ内で実行）
+docker compose -f docker-compose.production.yml exec app php artisan config:clear
+docker compose -f docker-compose.production.yml exec app php artisan cache:clear
+docker compose -f docker-compose.production.yml exec app php artisan route:clear
+docker compose -f docker-compose.production.yml exec app php artisan view:clear
+
+# キャッシュ最適化（コンテナ内で実行）
+docker compose -f docker-compose.production.yml exec app php artisan config:cache
+docker compose -f docker-compose.production.yml exec app php artisan route:cache
+docker compose -f docker-compose.production.yml exec app php artisan view:cache
 ```
 
 #### 動作確認
