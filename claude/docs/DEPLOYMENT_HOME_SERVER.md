@@ -239,8 +239,8 @@ sudo apt install -y ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
-# SSH接続を許可（必ず先に設定！）
-sudo ufw allow 22/tcp
+# SSH接続を許可（必ず先に設定！カスタムポートの場合）
+sudo ufw allow 56834/tcp
 
 # HTTP/HTTPS接続を許可
 sudo ufw allow 80/tcp
@@ -268,8 +268,8 @@ sudo nano /etc/ssh/sshd_config
 以下の設定を確認・変更:
 
 ```bash
-# ポート変更（オプション：デフォルトポートを変更する場合）
-# Port 22222
+# ポート変更（セキュリティ強化のため必須）
+Port 56834
 
 # パスワード認証を無効化（鍵認証のみ許可）
 PasswordAuthentication no
@@ -391,12 +391,14 @@ sudo nano /usr/local/bin/mydns-update.sh
 MYDNS_ID="your-master-id"
 MYDNS_PASSWORD="your-password"
 
-# IPアドレスを更新
-curl -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
+# IPアドレスを更新（IPv4を強制）
+curl -4 -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
 
 # ログに記録（オプション）
 echo "$(date): MyDNS IP updated" >> /var/log/mydns-update.log
 ```
+
+⚠️ **重要**: `-4`フラグを追加して、IPv4接続を強制してください。これにより、IPv4アドレスがMyDNS.jpに正しく通知されます。IPv6のみが通知されると、GitHub Actionsからの接続が失敗する可能性があります。
 
 実行権限を付与:
 
@@ -439,11 +441,21 @@ cat /var/log/mydns-update.log
 |----------|-----------|--------------|-----------|------|
 | TCP | 80 | サーバーのローカルIP | 80 | HTTP |
 | TCP | 443 | サーバーのローカルIP | 443 | HTTPS |
-| TCP | 22 | サーバーのローカルIP | 22 | SSH（オプション）|
+| TCP | 56834※ | サーバーのローカルIP | 56834※ | SSH（GitHub Actions用）|
+
+※ SSHポートは標準の22番から変更することを強く推奨します（例: 56834）
 
 ⚠️ **セキュリティ上の注意**:
-- SSHポートを外部公開する場合は、強力な鍵認証とfail2banの設定を必ず行ってください
-- 可能であればSSHポートは変更し、VPN経由でのアクセスを推奨します
+- SSHポートは必ずデフォルトの22番から変更してください
+- 強力な鍵認証を設定し、パスワード認証は無効化してください
+- fail2banを必ず設定してください
+- ポートフォワーディングは**必ずON（有効）** にしてください。OFFのままだと外部からSSH接続できません
+
+⚠️ **ポートフォワーディング設定の確認**:
+設定後、必ず外部ネットワーク（スマートフォンのテザリング等）から接続テストを行ってください:
+```bash
+ssh -p 56834 username@your-domain.mydns.jp
+```
 
 #### サーバーの固定ローカルIP設定
 
@@ -510,9 +522,26 @@ cat ~/.ssh/id_ed25519_deploy.pub
 3. 「Add deploy key」をクリック
 4. 以下を入力:
    - **Title**: `Home Server Deploy Key`
-   - **Key**: 上記で表示された公開鍵の内容をペースト
+   - **Key**: 上記で表示された公開鍵の内容（`ssh-ed25519 AAAA...`で始まる1行）をペースト
    - **Allow write access**: チェックを入れない（読み取り専用）
 5. 「Add key」をクリック
+
+#### サーバーのauthorized_keysへの公開鍵登録
+
+GitHub ActionsからSSH接続するために、デプロイ用公開鍵をサーバーの`authorized_keys`に追加する必要があります。
+
+```bash
+# デプロイ用公開鍵をauthorized_keysに追加
+cat ~/.ssh/id_ed25519_deploy.pub >> ~/.ssh/authorized_keys
+
+# パーミッション設定
+chmod 600 ~/.ssh/authorized_keys
+
+# 確認
+cat ~/.ssh/authorized_keys
+```
+
+⚠️ **重要**: この手順を忘れると、GitHub Actionsのデプロイ時に認証エラーが発生します。
 
 #### 接続テスト
 
@@ -583,6 +612,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          port: 56834  # カスタムSSHポートを指定
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
 
@@ -590,12 +620,15 @@ jobs:
             git fetch origin
             git reset --hard origin/release
 
-            # 依存関係の更新
-            docker compose -f docker-compose.production.yml exec -T app composer install --no-dev --optimize-autoloader
-            docker compose -f docker-compose.production.yml exec -T app npm ci --omit=dev
+            # 依存関係の更新（ホスト側で実行）
+            composer install --no-dev --optimize-autoloader
+            npm ci
 
-            # アセットのビルド
-            docker compose -f docker-compose.production.yml exec -T app npm run production
+            # アセットのビルド（ホスト側で実行）
+            npm run production
+
+            # ビルド後、開発用依存関係を削除
+            npm prune --omit=dev
 
             # データベースマイグレーション
             docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
@@ -1882,6 +1915,8 @@ docker compose -f docker-compose.production.yml exec app chmod -R 775 bootstrap/
 - SSH接続失敗
 - 秘密鍵の設定ミス
 - サーバー上のパーミッション問題
+- ポートフォワーディングがOFF
+- authorized_keysに公開鍵が未登録
 
 **解決方法**:
 
@@ -1890,20 +1925,52 @@ docker compose -f docker-compose.production.yml exec app chmod -R 775 bootstrap/
    - 失敗したワークフローをクリック
    - エラーメッセージを確認
 
-2. **SSH接続テスト**:
+2. **エラー別の対処法**:
+
+   **a) `dial tcp [IPv6アドレス]:22: connect: network is unreachable`**
+   - 原因: MyDNS.jpにIPv4アドレスが登録されていない
+   - 解決策: MyDNS更新スクリプトに`-4`フラグを追加
    ```bash
-   # 開発環境から本番サーバーにSSH接続できるか確認
-   ssh username@shin-on-wiki.mydns.jp
+   sudo nano /usr/local/bin/mydns-update.sh
+   # curl -4 -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
+   sudo /usr/local/bin/mydns-update.sh
    ```
 
-3. **Secretsの再確認**:
-   - GitHub Secretsの設定を確認
-   - 特に`DEPLOY_KEY`が正しい秘密鍵であることを確認
+   **b) `dial tcp xxx.xxx.xxx.xxx:22: i/o timeout`**
+   - 原因: ポートフォワーディングがOFFまたはSSHポート番号が間違っている
+   - 解決策1: ルーターのポートフォワーディングをONにする
+   - 解決策2: GitHub Actionsワークフローに正しいポート番号を指定
+   ```yaml
+   with:
+     host: ${{ secrets.DEPLOY_HOST }}
+     port: 56834  # カスタムポート番号を指定
+   ```
 
-4. **サーバー側のSSH設定確認**:
+   **c) `ssh: handshake failed: ssh: unable to authenticate`**
+   - 原因: authorized_keysにデプロイ用公開鍵が登録されていない
+   - 解決策:
+   ```bash
+   cat ~/.ssh/id_ed25519_deploy.pub >> ~/.ssh/authorized_keys
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+
+3. **SSH接続テスト**:
+   ```bash
+   # 外部ネットワーク（テザリング）から接続テスト
+   ssh -p 56834 username@your-domain.mydns.jp
+   ```
+
+4. **Secretsの再確認**:
+   - GitHub Secretsの設定を確認
+   - 特に`DEPLOY_KEY`が正しい秘密鍵（`-----BEGIN OPENSSH PRIVATE KEY-----`から始まる）であることを確認
+
+5. **サーバー側のSSH設定確認**:
    ```bash
    # サーバー上でSSHログを確認
    sudo tail -f /var/log/auth.log
+
+   # PubkeyAuthenticationが有効か確認
+   sudo grep "PubkeyAuthentication" /etc/ssh/sshd_config
    ```
 
 ---
@@ -2074,11 +2141,11 @@ curl -I https://shin-on-wiki.mydns.jp | grep -E "(X-Frame|X-Content|Strict-Trans
 
 ## 📅 最終更新日
 
-2025年1月23日
+2025年11月24日
 
 ## 👥 作成者
 
-Claude Code + satoshi
+Claude Code + satoshi (Tateishi)
 
 ---
 
