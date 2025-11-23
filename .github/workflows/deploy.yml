@@ -29,10 +29,13 @@ jobs:
 
             # 依存関係の更新（ホスト側で実行）
             composer install --no-dev --optimize-autoloader
-            npm ci --omit=dev
+            npm ci
 
             # アセットのビルド（ホスト側で実行）
-            npm run build
+            npm run production
+
+            # ビルド後、開発用依存関係を削除
+            npm prune --omit=dev
 
             # データベースマイグレーション
             docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force

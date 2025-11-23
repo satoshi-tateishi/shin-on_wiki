@@ -804,16 +804,22 @@ npm --version
 ##### NPM 依存関係のインストールとアセットビルド
 
 ```bash
-# NPMの依存関係をインストール（本番環境用、開発用パッケージは除外）
-npm ci --omit=dev
+# NPMの依存関係をインストール（開発用も含む - ビルドツールが必要）
+npm ci
 
 # アセットをビルド（本番環境用）
-npm run build
+npm run production
 
-# node_modules と public/build ディレクトリが作成されたことを確認
+# ビルド後、開発用依存関係を削除（ディスク容量節約）
+npm prune --omit=dev
+
+# node_modules と public/dist ディレクトリが作成されたことを確認
 ls -la node_modules/
-ls -la public/build/
+ls -la public/dist/
 ```
+
+> **💡 ビルドに関する注意**
+> `npm run production`を実行するには、`npm-run-all`、`sass`、`esbuild`などのビルドツールが必要です。これらは`devDependencies`に含まれているため、`npm ci`で開発用依存関係も含めてインストールします。ビルド完了後、`npm prune --omit=dev`で開発用依存関係を削除することで、ディスク容量を節約できます。
 
 #### Docker Composeビルド・起動
 
