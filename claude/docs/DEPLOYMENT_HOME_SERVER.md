@@ -689,7 +689,7 @@ APP_PORT=8083
 FORWARD_DB_PORT=3308
 
 # データベース設定
-DB_HOST=mysql  # Docker Composeのサービス名
+DB_HOST=db     # Docker Composeのサービス名（docker-compose.production.ymlのサービス名）
 DB_PORT=3306   # コンテナ内部のポート
 DB_DATABASE=shin_on_wiki
 DB_USERNAME=bookstack
@@ -738,10 +738,14 @@ LOG_LEVEL=warning
 # .envファイルのパーミッションを制限
 chmod 600 .env
 
-# ストレージディレクトリのパーミッション設定
+# ストレージディレクトリの初期パーミッション設定（ホスト側での作業用）
 sudo chown -R $USER:$USER storage bootstrap/cache
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
+
+# public/uploadsのパーミッション設定
+sudo chown -R $USER:$USER public/uploads
+chmod -R 775 public/uploads
 ```
 
 #### ホスト側の依存関係インストール
@@ -869,6 +873,22 @@ php artisan storage:link
 > **⚠️ 重要**
 > `public`ディレクトリも読み取り専用マウントのため、シンボリックリンクの作成はホスト側で実行してください。
 
+#### Dockerコンテナ用のパーミッション設定
+
+コンテナを起動すると、Apache（www-data, UID=33）がストレージディレクトリに書き込む必要があります。以下のコマンドでパーミッションを修正します。
+
+```bash
+# Dockerコンテナ内のApache（www-data）ユーザー用にパーミッション設定
+sudo chown -R 33:33 storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# コンテナを再起動してパーミッション変更を反映
+docker compose -f docker-compose.production.yml restart app
+```
+
+> **⚠️ 重要**
+> この設定により、コンテナ内のwww-dataユーザー（UID=33）がログやキャッシュファイルを書き込めるようになります。この手順を忘れると、HTTP 500エラーが発生します。
+
 #### キャッシュ最適化
 
 ```bash
@@ -888,9 +908,21 @@ docker compose -f docker-compose.production.yml exec app php artisan view:cache
 
 ```bash
 # コンテナ内部からアクセステスト
-curl http://localhost:8083
+curl -I http://localhost:8083
 
-# レスポンスが返ってくればOK
+# HTTP 302 Found（ログインページへのリダイレクト）が返ってくればOK
+```
+
+#### APP_DEBUGを本番モードに戻す
+
+動作確認が完了したら、デバッグモードを無効にします。
+
+```bash
+# APP_DEBUGをfalseに変更
+sed -i 's/APP_DEBUG=true/APP_DEBUG=false/' .env
+
+# コンテナを再起動
+docker compose -f docker-compose.production.yml restart app
 ```
 
 ---
