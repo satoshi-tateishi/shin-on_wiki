@@ -229,13 +229,15 @@ LINE WORKSはJWKSエンドポイントを提供していないため、JWT署名
 ## 🚦 稼働状況
 
 ### アクセスURL
-- **本番**: https://localhost:8443
+- **本番**: https://shin-on.mydns.jp
+- **ローカル開発**: https://localhost:8443
 - **PHP開発サーバー**: http://localhost:8083
 
 ### 現在のステータス
 - ✅ LINE WORKS SSO認証: 正常動作
 - ✅ ドメイン検証: 正常動作
 - ✅ セキュリティ対策: 実装済み
+- ✅ 自動デプロイ: GitHub Actions連携
 
 ## 📝 修正したファイル一覧
 
