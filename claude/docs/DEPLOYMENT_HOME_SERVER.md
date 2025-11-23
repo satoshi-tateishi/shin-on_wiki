@@ -1203,20 +1203,38 @@ curl -I https://shin-on-wiki.mydns.jp
 
 ### 8.1 LINE WORKS設定
 
-#### LINE WORKS Developer Console
+本番環境でLINE WORKS認証を使用するには、LINE WORKS Developer ConsoleでOAuthリダイレクトURIを追加する必要があります。
 
-1. [LINE WORKS Developer Console](https://developers.worksmobile.com/)にアクセス
-2. ログイン後、該当するアプリを選択
-3. 「OAuth 2.0」セクションを開く
-4. 「リダイレクトURI」に以下を**追加**:
+#### LINE WORKS Developer Console でのコールバックURL設定
 
-```
-https://shin-on-wiki.mydns.jp/oidc/callback
-```
+1. **LINE WORKS Developer Consoleにアクセス**
+   - https://developers.worksmobile.com/jp/console/openapi/v2/app/list
 
-⚠️ **注意**: 既存の開発環境用URI（`https://localhost:8443/oidc/callback`）は削除せず、追加してください。
+2. **アプリを選択**
+   - ログイン後、shin-on Wiki用に作成したアプリを選択
 
-5. 「保存」をクリック
+3. **OAuth Redirect URLを編集**
+   - 「OAuth Redirect URL」セクションを開く
+   - 以下の本番環境用URLを**追加**:
+
+   ```
+   https://shin-on.mydns.jp/oidc/callback
+   ```
+
+4. **開発環境のURLも併記する（推奨）**
+
+   開発環境と本番環境を並行して使用できるよう、両方のURLを登録しておくことをお勧めします:
+
+   ```
+   http://localhost:8080/oidc/callback
+   https://shin-on.mydns.jp/oidc/callback
+   ```
+
+   > **💡 Tips**
+   > - 複数のURLを登録できるため、開発環境のURLは削除しないでください
+   > - HTTPSを使用している場合は`https://`、開発環境でHTTPの場合は`http://`を指定
+
+5. **「保存」をクリック**
 
 #### .envファイルの確認
 
@@ -1240,20 +1258,39 @@ LINEWORKS_DOMAIN=shin-on1981
 
 ### 8.2 Dropbox設定
 
-#### Dropbox App Console
+本番環境でDropboxバックアップ機能を使用するには、Dropbox App ConsoleでOAuthリダイレクトURIを追加する必要があります。
 
-1. [Dropbox App Console](https://www.dropbox.com/developers/apps)にアクセス
-2. ログイン後、該当するアプリを選択
-3. 「Settings」タブを開く
-4. 「OAuth 2」セクションの「Redirect URIs」に以下を**追加**:
+#### Dropbox App Console でのコールバックURL設定
 
-```
-https://shin-on-wiki.mydns.jp/auth/dropbox/callback
-```
+1. **Dropbox App Consoleにアクセス**
+   - https://www.dropbox.com/developers/apps
 
-⚠️ **注意**: 既存の開発環境用URI（`https://localhost:8443/auth/dropbox/callback`）は削除せず、追加してください。
+2. **アプリを選択**
+   - ログイン後、shin-on Wikiバックアップ用に作成したアプリを選択
 
-5. 「Add」をクリック後、「Save」をクリック
+3. **Settings タブを開く**
+
+4. **OAuth 2 Redirect URIs を編集**
+   - 「OAuth 2」セクションの「Redirect URIs」に以下を**追加**:
+
+   ```
+   https://shin-on.mydns.jp/auth/dropbox/callback
+   ```
+
+5. **開発環境のURLも併記する（推奨）**
+
+   開発環境と本番環境を並行して使用できるよう、両方のURLを登録しておくことをお勧めします:
+
+   ```
+   http://localhost:8080/auth/dropbox/callback
+   https://shin-on.mydns.jp/auth/dropbox/callback
+   ```
+
+   > **💡 Tips**
+   > - 複数のURLを登録できるため、開発環境のURLは削除しないでください
+   > - 各URLを追加後、「Add」ボタンをクリック
+
+6. **「Save」をクリック**してすべての変更を保存
 
 #### .envファイルの確認
 
