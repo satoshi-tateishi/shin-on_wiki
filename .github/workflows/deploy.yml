@@ -9,6 +9,8 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    # 特定のリポジトリでのみ実行
+    if: github.repository == 'satoshi-tateishi/shin-on_wiki'
 
     steps:
       - name: Checkout code
@@ -24,9 +26,15 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
 
-            # 最新のコードを取得
-            git fetch origin
+            # パーミッション修正（git resetのため一時的に所有権を変更）
+            sudo chown -R $USER:$USER ${{ secrets.DEPLOY_PATH }}
+
+            # 最新のコードを取得（デプロイキーを使用）
+            GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519_deploy -o StrictHostKeyChecking=no' git fetch origin
             git reset --hard origin/release
+
+            # storage と bootstrap/cache の所有者をwww-data(33)に戻す
+            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
 
             # 依存関係の更新（ホスト側で実行）
             composer install --no-dev --optimize-autoloader
@@ -38,21 +46,21 @@ jobs:
             # ビルド後、開発用依存関係を削除
             npm prune --omit=dev
 
+            # Dockerコンテナを再起動（PHPコードの変更を反映）
+            docker compose restart app
+
             # データベースマイグレーション
-            docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
+            docker compose exec -T app php artisan migrate --force
 
             # キャッシュクリア
-            docker compose -f docker-compose.production.yml exec -T app php artisan config:clear
-            docker compose -f docker-compose.production.yml exec -T app php artisan cache:clear
-            docker compose -f docker-compose.production.yml exec -T app php artisan route:clear
-            docker compose -f docker-compose.production.yml exec -T app php artisan view:clear
+            docker compose exec -T app php artisan config:clear
+            docker compose exec -T app php artisan cache:clear
+            docker compose exec -T app php artisan route:clear
+            docker compose exec -T app php artisan view:clear
 
             # キャッシュ最適化
-            docker compose -f docker-compose.production.yml exec -T app php artisan config:cache
-            docker compose -f docker-compose.production.yml exec -T app php artisan route:cache
-            docker compose -f docker-compose.production.yml exec -T app php artisan view:cache
-
-            # コンテナの再起動（必要な場合）
-            # docker compose -f docker-compose.production.yml restart app
+            docker compose exec -T app php artisan config:cache
+            docker compose exec -T app php artisan route:cache
+            docker compose exec -T app php artisan view:cache
 
             echo "Deployment completed successfully!"
