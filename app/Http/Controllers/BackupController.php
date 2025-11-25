@@ -485,11 +485,57 @@ class BackupController extends Controller
 
             Log::info('Cache cleared, now regenerating...');
 
-            // bash -c で .env を source してからキャッシュを再生成
-            // set -a で全ての変数を自動的にexport
-            $configCmd = "bash -c 'set -a && source {$appPath}/.env && set +a && cd {$appPath} && php artisan config:cache' 2>&1";
-            $routeCmd = "bash -c 'cd {$appPath} && php artisan route:cache' 2>&1";
-            $viewCmd = "bash -c 'cd {$appPath} && php artisan view:cache' 2>&1";
+            // .envファイルを直接読み込んで環境変数を設定
+            $envFile = $appPath . '/.env';
+            $envVars = [];
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    // コメント行をスキップ
+                    if (strpos(trim($line), '#') === 0) {
+                        continue;
+                    }
+                    // KEY=VALUE形式を解析
+                    if (strpos($line, '=') !== false) {
+                        list($key, $value) = explode('=', $line, 2);
+                        $key = trim($key);
+                        $value = trim($value);
+                        // クォートを除去
+                        $value = trim($value, '"\'');
+                        $envVars[$key] = $value;
+                    }
+                }
+            }
+
+            // 環境変数を設定
+            foreach ($envVars as $key => $value) {
+                putenv("{$key}={$value}");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+
+            Log::info('Environment variables loaded from .env', [
+                'DB_HOST' => $envVars['DB_HOST'] ?? 'not set',
+                'APP_URL' => $envVars['APP_URL'] ?? 'not set',
+            ]);
+
+            // PHPバイナリのパスを取得
+            $phpBinary = PHP_BINARY;
+
+            // 環境変数を文字列として構築
+            $envString = '';
+            foreach ($envVars as $key => $value) {
+                // シェルで安全にエスケープ
+                $escapedValue = escapeshellarg($value);
+                $envString .= "{$key}={$escapedValue} ";
+            }
+
+            // 環境変数付きでartisanコマンドを実行
+            $configCmd = "cd {$appPath} && {$envString} {$phpBinary} artisan config:cache 2>&1";
+            $routeCmd = "cd {$appPath} && {$phpBinary} artisan route:cache 2>&1";
+            $viewCmd = "cd {$appPath} && {$phpBinary} artisan view:cache 2>&1";
+
+            Log::info('Executing config:cache command', ['command' => $configCmd]);
 
             exec($configCmd, $configOutput, $configReturn);
             exec($routeCmd, $routeOutput, $routeReturn);
@@ -497,8 +543,19 @@ class BackupController extends Controller
 
             $success = ($configReturn === 0 && $routeReturn === 0 && $viewReturn === 0);
 
+            // config.phpの内容を確認
+            $configCachePath = $appPath . '/bootstrap/cache/config.php';
+            $cachedDbHost = 'unknown';
+            if (file_exists($configCachePath)) {
+                $configContent = file_get_contents($configCachePath);
+                if (preg_match("/'host'\s*=>\s*'([^']+)'/", $configContent, $matches)) {
+                    $cachedDbHost = $matches[1];
+                }
+            }
+
             Log::info('Cache regeneration completed', [
                 'success' => $success,
+                'cached_db_host' => $cachedDbHost,
                 'config_cache' => ['return' => $configReturn, 'output' => implode("\n", $configOutput)],
                 'route_cache' => ['return' => $routeReturn, 'output' => implode("\n", $routeOutput)],
                 'view_cache' => ['return' => $viewReturn, 'output' => implode("\n", $viewOutput)],
@@ -508,6 +565,7 @@ class BackupController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'キャッシュの再生成が完了しました。ページをリロードしてください。',
+                    'cached_db_host' => $cachedDbHost,
                 ]);
             } else {
                 return response()->json([
