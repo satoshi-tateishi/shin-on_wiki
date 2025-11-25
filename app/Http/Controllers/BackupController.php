@@ -477,38 +477,48 @@ class BackupController extends Controller
 
             $appPath = base_path();
 
-            // .envファイルから環境変数を読み込んでexportコマンドを生成
+            // .envファイルから環境変数を読み込んでputenv()で設定
             $envFile = $appPath . '/.env';
-            $envVars = '';
             if (file_exists($envFile)) {
                 $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
                 foreach ($lines as $line) {
-                    if (strpos($line, '#') === 0) continue; // コメントをスキップ
+                    if (strpos($line, '#') === 0) continue;
                     if (strpos($line, '=') === false) continue;
-                    // シェルで使用するためにエスケープ
-                    $line = str_replace('"', '\\"', $line);
-                    $envVars .= "export \"{$line}\" && ";
+                    putenv($line);
+                    // $_ENV と $_SERVER にも設定
+                    list($key, $value) = explode('=', $line, 2);
+                    $_ENV[$key] = $value;
+                    $_SERVER[$key] = $value;
                 }
             }
 
+            // 設定リポジトリをクリアして再読み込み
+            app('config')->set('database.connections.mysql.host', env('DB_HOST', 'db'));
+
             // キャッシュをクリア
-            exec("cd {$appPath} && {$envVars} php artisan cache:clear 2>&1", $output1, $return1);
-            exec("cd {$appPath} && {$envVars} php artisan config:clear 2>&1", $output2, $return2);
-            exec("cd {$appPath} && {$envVars} php artisan route:clear 2>&1", $output3, $return3);
-            exec("cd {$appPath} && {$envVars} php artisan view:clear 2>&1", $output4, $return4);
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            \Artisan::call('route:clear');
+            \Artisan::call('view:clear');
 
-            // キャッシュを再生成（.envの環境変数を明示的に設定）
-            exec("cd {$appPath} && {$envVars} php artisan config:cache 2>&1", $output5, $return5);
-            exec("cd {$appPath} && {$envVars} php artisan route:cache 2>&1", $output6, $return6);
-            exec("cd {$appPath} && {$envVars} php artisan view:cache 2>&1", $output7, $return7);
+            Log::info('Cache cleared, now regenerating...');
 
-            $success = ($return5 === 0 && $return6 === 0 && $return7 === 0);
+            // シェルでキャッシュを再生成（bash -c で環境変数を明示的に設定）
+            $dbHost = env('DB_HOST', 'db');
+            $cmd = "cd {$appPath} && DB_HOST={$dbHost} php artisan config:cache 2>&1";
+            exec($cmd, $configOutput, $configReturn);
+
+            exec("cd {$appPath} && php artisan route:cache 2>&1", $routeOutput, $routeReturn);
+            exec("cd {$appPath} && php artisan view:cache 2>&1", $viewOutput, $viewReturn);
+
+            $success = ($configReturn === 0 && $routeReturn === 0 && $viewReturn === 0);
 
             Log::info('Cache regeneration completed', [
                 'success' => $success,
-                'config_cache' => ['return' => $return5, 'output' => implode("\n", $output5)],
-                'route_cache' => ['return' => $return6, 'output' => implode("\n", $output6)],
-                'view_cache' => ['return' => $return7, 'output' => implode("\n", $output7)],
+                'db_host' => $dbHost,
+                'config_cache' => ['return' => $configReturn, 'output' => implode("\n", $configOutput)],
+                'route_cache' => ['return' => $routeReturn, 'output' => implode("\n", $routeOutput)],
+                'view_cache' => ['return' => $viewReturn, 'output' => implode("\n", $viewOutput)],
             ]);
 
             if ($success) {
@@ -521,9 +531,9 @@ class BackupController extends Controller
                     'success' => false,
                     'error' => 'キャッシュの再生成に失敗しました',
                     'details' => [
-                        'config' => implode("\n", $output5),
-                        'route' => implode("\n", $output6),
-                        'view' => implode("\n", $output7),
+                        'config' => implode("\n", $configOutput),
+                        'route' => implode("\n", $routeOutput),
+                        'view' => implode("\n", $viewOutput),
                     ],
                 ], 500);
             }
