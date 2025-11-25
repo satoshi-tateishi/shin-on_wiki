@@ -1217,8 +1217,9 @@ class BackupService
                 $updates[$oldUrl] = $result;
             }
 
-            // キャッシュクリア
-            $this->clearApplicationCache();
+            // 注意: キャッシュクリアは復元処理中に行わない
+            // 復元完了後にユーザーが手動でキャッシュ再生成ボタンを押す
+            // これにより、DB接続エラーを防ぐ
 
             Log::info('Auto URL update completed', [
                 'updates' => $updates,

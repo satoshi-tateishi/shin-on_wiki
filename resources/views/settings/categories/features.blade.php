@@ -433,17 +433,16 @@
                 const restoreData = await restoreResponse.json();
 
                 if (restoreData.success) {
-                    // URLが更新された場合は自動でキャッシュ再生成を実行
+                    hideProgressDialog();
+
+                    // URLが更新された場合はキャッシュ再生成が必要
                     const urlsUpdated = restoreData.url_update && restoreData.url_update.updates && Object.keys(restoreData.url_update.updates).length > 0;
 
                     if (urlsUpdated) {
-                        updateProgressDialog('キャッシュ再生成中', 'CSSを反映するためキャッシュを再生成しています...');
-                        // 少しディレイを入れて自動でキャッシュ再生成
-                        setTimeout(() => {
-                            autoRegenerateCache();
-                        }, 1000);
+                        showAlert('success', '✅ データベースの復元が完了しました！');
+                        // キャッシュ再生成ボタンを表示
+                        showCacheRegenerateButton();
                     } else {
-                        hideProgressDialog();
                         showAlert('success', '✅ データベースの復元が完了しました！');
                         setTimeout(() => {
                             if (confirm('復元が完了しました。ページをリロードしますか？')) {
@@ -563,39 +562,7 @@
             if (style) style.remove();
         }
 
-        // Auto regenerate cache after restore
-        async function autoRegenerateCache() {
-            try {
-                const response = await fetch('/api/backup/regenerate-cache', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    updateProgressDialog('完了', '✅ 復元が完了しました。ページをリロードします...');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    // 失敗した場合は手動ボタンを表示
-                    hideProgressDialog();
-                    showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
-                    showCacheRegenerateButton();
-                }
-            } catch (error) {
-                // エラーの場合も手動ボタンを表示
-                hideProgressDialog();
-                showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
-                showCacheRegenerateButton();
-            }
-        }
-
-        // Show cache regenerate button (fallback for manual operation)
+        // Show cache regenerate button
         function showCacheRegenerateButton() {
             // Remove existing button if any
             const existingContainer = document.getElementById('cache-regenerate-container');
