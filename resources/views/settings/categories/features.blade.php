@@ -378,6 +378,9 @@
 
         // Restore backup
         async function restoreBackup(timestamp) {
+            // Show progress dialog for validation
+            showProgressDialog('確認中', 'バックアップ情報を確認しています...');
+
             // Validation request
             try {
                 const validateResponse = await fetch('/api/backup/validate-restore', {
@@ -390,6 +393,9 @@
                 });
 
                 const validateData = await validateResponse.json();
+
+                // Hide progress dialog for confirmation dialogs
+                hideProgressDialog();
 
                 if (!validateData.success) {
                     showAlert('danger', '検証失敗: ' + validateData.error);
@@ -409,7 +415,7 @@
 
                 const createBackup = confirm('復元前に現在のデータベースをバックアップしますか？\n（強く推奨）');
 
-                // Show progress dialog
+                // Show progress dialog for restore
                 showProgressDialog('復元中', 'データベースとファイルを復元しています...');
 
                 const restoreResponse = await fetch('/api/backup/restore', {
