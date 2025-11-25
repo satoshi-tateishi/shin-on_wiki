@@ -1344,22 +1344,32 @@ class BackupService
     }
 
     /**
-     * アプリケーションキャッシュをクリア
-     * 注意: キャッシュの再生成はWebリクエスト内では正しく動作しないため、
-     * コンテナ再起動後に自動で再生成される
+     * アプリケーションキャッシュをクリアして再生成
+     * シェルコマンドとして実行することで、Webリクエストのコンテキスト外でキャッシュを再生成
      */
     private function clearApplicationCache(): void
     {
         try {
-            // キャッシュをクリアのみ（再生成はコンテナ再起動時に行う）
-            \Artisan::call('cache:clear');
-            \Artisan::call('config:clear');
-            \Artisan::call('route:clear');
-            \Artisan::call('view:clear');
+            // まずキャッシュをクリア
+            Process::run('php /app/artisan cache:clear');
+            Process::run('php /app/artisan config:clear');
+            Process::run('php /app/artisan route:clear');
+            Process::run('php /app/artisan view:clear');
 
-            Log::info('Application cache cleared after URL update');
+            Log::info('Application cache cleared');
+
+            // キャッシュを再生成（シェルコマンドとして実行）
+            $configResult = Process::run('php /app/artisan config:cache');
+            $routeResult = Process::run('php /app/artisan route:cache');
+            $viewResult = Process::run('php /app/artisan view:cache');
+
+            Log::info('Application cache regenerated', [
+                'config' => $configResult->successful(),
+                'route' => $routeResult->successful(),
+                'view' => $viewResult->successful(),
+            ]);
         } catch (Exception $e) {
-            Log::warning('Failed to clear cache', [
+            Log::warning('Failed to clear/regenerate cache', [
                 'error' => $e->getMessage(),
             ]);
         }

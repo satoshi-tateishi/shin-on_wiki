@@ -338,18 +338,12 @@ class BackupController extends Controller
             // クリーンアップ
             $this->backupService->cleanupRestoreFiles($timestamp);
 
-            // URLが更新された場合は再起動が必要
-            $requiresRestart = !empty($urlUpdateResult['updates']);
-
             return response()->json([
                 'success' => true,
-                'message' => $requiresRestart
-                    ? 'データベースとファイルの復元が完了しました。キャッシュを反映するためコンテナの再起動が必要です。'
-                    : 'データベースとファイルの復元が完了しました',
+                'message' => 'データベースとファイルの復元が完了しました',
                 'database_restore' => $restoreResult,
                 'files_restore' => $filesRestoreResult,
                 'url_update' => $urlUpdateResult,
-                'requires_restart' => $requiresRestart,
             ]);
 
         } catch (Exception $e) {

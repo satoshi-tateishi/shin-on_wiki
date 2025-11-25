@@ -764,6 +764,10 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://shin-on-wiki.mydns.jp  # あなたのドメイン名
 
+# リバースプロキシ設定（Apache/Nginxの背後で動作する場合は必須）
+# HTTPSが正しく検出されるよう、すべてのプロキシを信頼
+APP_PROXIES=*
+
 # アプリケーションキー（後で生成）
 APP_KEY=
 
@@ -2139,9 +2143,267 @@ curl -I https://shin-on-wiki.mydns.jp | grep -E "(X-Frame|X-Content|Strict-Trans
 
 ---
 
+---
+
+## データ移行とURL修正
+
+### 現在の状況（2025年11月24日 16:00時点）
+
+開発環境から本番環境へのデータ移行を実施し、以下の状態です：
+
+✅ **完了した作業**:
+- 開発環境のデータ（60ページ＋添付ファイル）をDropboxバックアップに保存
+- 本番環境でDropboxからの復元に成功
+- データベース内のURLを`http://localhost:8083`から`https://shin-on.mydns.jp`に自動変換
+- ページ内の画像が正常に表示されることを確認
+- CSSが正常に適用されることを確認
+
+⚠️ **未完了の作業**:
+- PDFファイルの復元問題の解決
+  - データベースには添付ファイル情報が存在（`attachments`テーブル）
+  - ファイル実体が`storage/uploads/files/2025-11-Nov/`に復元されていない
+  - **原因**: 開発環境でPDFファイルの所有者がrootで、権限が600だったため、バックアップZIPに含まれなかった
+  - **対応が必要**: バックアップコマンドでPDFファイルが正しく含まれるようにする
+
+📋 **今後の改善タスク**:
+- 相対URLでのバックアップデータ保存の実装
+  - **目的**: 環境間のデータ移行時にURL変換が不要になる
+  - **現状の問題**:
+    - バックアップは作成時のデータベースURLをそのまま保存（開発: `http://localhost:8083`、本番: `https://shin-on.mydns.jp`）
+    - 環境間で復元する際、`after-restore.sh`スクリプトによるURL変換が必要
+  - **提案される解決策**:
+    - データベースに絶対URL（`https://example.com/uploads/...`）ではなく、相対URL（`/uploads/...`）で保存
+    - BookStackのコードレベルでの修正が必要（設定変更だけでは対応不可）
+    - 実装後は環境を問わずバックアップが動作し、`after-restore.sh`が不要になる
+  - **メリット**:
+    - 開発環境⇔本番環境のデータ移行が簡素化
+    - URL変換スクリプトが不要になる
+    - 環境依存のバグを減らせる
+  - **対応範囲**:
+    - `images->url`: 画像のURL
+    - `entity_page_data->html`: ページコンテンツ内のHTML
+    - `page_revisions->html`: ページ履歴のHTML
+    - `attachments->path`: 添付ファイルのパス
+    - その他、BookStack内で絶対URLを保存している箇所
+
+### 復元後のURL自動修正スクリプト
+
+Dropboxから復元すると、データベース内のURLが開発環境の`http://localhost:8083`に戻ってしまいます。以下のスクリプトを使用して自動的にURLを本番環境用に修正できます。
+
+#### after-restore.sh の作成
+
+本番環境の`/var/www/shin-on_wiki/`に以下のスクリプトを作成してください：
+
+```bash
+#!/bin/bash
+# 復元後にURLを自動修正するスクリプト
+
+echo "🔧 URLを修正中..."
+docker compose exec app php artisan bookstack:update-url --force http://localhost:8083 https://shin-on.mydns.jp
+
+echo "🧹 キャッシュクリア中..."
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan view:clear
+docker compose exec app php artisan route:cache
+docker compose exec app php artisan config:cache
+
+echo "🔄 再起動中..."
+docker compose restart app
+
+echo "✅ 完了！"
+```
+
+#### スクリプトの使用方法
+
+1. **スクリプトファイルを作成**:
+   ```bash
+   cd /var/www/shin-on_wiki
+   nano after-restore.sh
+   # 上記の内容を貼り付け
+   # Ctrl+O → Enter → Ctrl+X で保存
+   ```
+
+2. **実行権限を付与**:
+   ```bash
+   chmod +x after-restore.sh
+   ```
+
+3. **使用手順**:
+   ```bash
+   # ① ブラウザでDropboxから復元を実行
+   # https://shin-on.mydns.jp/settings/backup にアクセス
+   # 復元したいタイムスタンプのバックアップを選択して復元
+
+   # ② 復元完了後、本番環境でスクリプトを実行
+   ./after-restore.sh
+   ```
+
+#### 自動修正される内容
+
+`bookstack:update-url`コマンドは以下のテーブルのURLを一括変換します：
+
+- `images->url`: 画像のURL（71件）
+- `entity_page_data->html`: ページコンテンツ内のHTML（18件）
+- `entity_page_data->text`: ページコンテンツのテキスト
+- `page_revisions->html`: ページ履歴のHTML（34件）
+- `attachments->path`: 添付ファイルのパス
+- `comments->html`: コメント内のHTML
+- その他、設定値等
+
+### 次回作業時の確認事項
+
+復元作業を続ける場合は、以下を確認してください：
+
+#### 1. PDFファイル復元問題の解決
+
+開発環境で権限を修正し、新しいバックアップを作成する必要があります。
+
+**開発環境で実行**:
+
+```bash
+# PDFファイルの権限を修正（既に実行済み）
+docker exec shin-on_wiki_app_1 chown -R www-data:www-data /app/storage/uploads/files/
+docker exec shin-on_wiki_app_1 chmod -R 755 /app/storage/uploads/files/
+
+# 権限確認
+docker exec shin-on_wiki_app_1 ls -la /app/storage/uploads/files/2025-11-Nov/
+# 出力例: -rwxr-xr-x 1 www-data www-data 78992 Nov 20 14:27 1XQxfAwzZKNLJySE-pdf
+
+# 新しいバックアップを作成
+docker exec shin-on_wiki_app_1 php artisan backup:dropbox
+
+# バックアップが成功したことを確認（タイムスタンプをメモ）
+# 例: 2025-11-24_16-10-17
+```
+
+**本番環境で実行**:
+
+```bash
+# ① ブラウザで新しいバックアップを復元
+# https://shin-on.mydns.jp/settings/backup にアクセス
+# 最新のタイムスタンプ（例: 2025-11-24_16-10-17）を選択して復元
+
+# ② 復元完了後、URL修正スクリプトを実行
+cd /var/www/shin-on_wiki
+./after-restore.sh
+
+# ③ PDFファイルが復元されたか確認
+docker compose exec app ls -la /app/storage/uploads/files/2025-11-Nov/
+# 出力例: -rwxr-xr-x 1 www-data www-data 78992 ... 1XQxfAwzZKNLJySE-pdf
+
+# ④ PDFファイルが見つかれば、ブラウザでアクセステスト
+# https://shin-on.mydns.jp/attachments/1 にアクセスしてPDFがダウンロードできるか確認
+```
+
+#### 2. 開発環境と本番環境のファイル整合性確認
+
+PDFファイルが復元された後、両環境で同じファイルが存在することを確認：
+
+```bash
+# 開発環境
+docker exec shin-on_wiki_app_1 find /app/storage/uploads/files -type f -name "*pdf"
+
+# 本番環境
+docker compose exec app find /app/storage/uploads/files -type f -name "*pdf"
+
+# 両方で同じファイルがリストされることを確認
+```
+
+#### 3. Dropboxバックアップの動作確認
+
+PDFファイルを含むバックアップが正しく作成できることを確認：
+
+```bash
+# 本番環境でバックアップを実行
+docker compose exec app php artisan backup:dropbox
+
+# 成功メッセージに以下が含まれることを確認:
+# ✅ Files backup
+#    📂 Local: files_backup_2025-XX-XX_XX-XX-XX.zip
+#    📏 Size: XX.XX MB (サイズが0以上であること)
+#    ☁️  Dropbox: ✅ Uploaded
+```
+
+### トラブルシューティング
+
+#### PDFファイルが復元されない場合
+
+**問題**: Dropboxから復元してもPDFファイルが存在しない
+
+**原因**:
+- バックアップ作成時にファイルの権限が不適切だった（rootユーザー所有、600権限）
+- www-dataユーザーがファイルを読み取れず、ZIPに含まれなかった
+
+**解決方法**:
+
+1. **開発環境でファイルの権限を確認**:
+   ```bash
+   docker exec shin-on_wiki_app_1 ls -la /app/storage/uploads/files/2025-11-Nov/
+
+   # 不正な例（rootユーザー、600権限）:
+   # drwx------ 3 root root 96 Nov 20 14:27 .
+   # -rw-r--r-- 1 root root 78992 Nov 20 14:27 1XQxfAwzZKNLJySE-pdf
+
+   # 正しい例（www-dataユーザー、755権限）:
+   # drwxr-xr-x 3 www-data www-data 96 Nov 20 14:27 .
+   # -rwxr-xr-x 1 www-data www-data 78992 Nov 20 14:27 1XQxfAwzZKNLJySE-pdf
+   ```
+
+2. **権限を修正**:
+   ```bash
+   # 開発環境で実行
+   docker exec shin-on_wiki_app_1 chown -R www-data:www-data /app/storage/uploads/files/
+   docker exec shin-on_wiki_app_1 chmod -R 755 /app/storage/uploads/files/
+   ```
+
+3. **新しいバックアップを作成**:
+   ```bash
+   # 開発環境で実行
+   docker exec shin-on_wiki_app_1 php artisan backup:dropbox
+
+   # 出力で Files backup のサイズが 0 以上であることを確認
+   # 📏 Size: 33.02 MB (PDFファイルが含まれている)
+   ```
+
+4. **本番環境で新しいバックアップを復元**:
+   - ブラウザで最新のバックアップを選択して復元
+   - `./after-restore.sh` を実行してURL修正
+   - PDFファイルの存在を確認
+
+#### バックアップZIPの中身を確認する方法
+
+バックアップにファイルが含まれているか確認したい場合:
+
+```bash
+# 開発環境でバックアップZIPの内容を確認
+docker exec shin-on_wiki_app_1 ls -lh /app/storage/app/backups/files_backup_*
+
+# 最新のZIPファイルの中身を表示（一部）
+docker exec shin-on_wiki_app_1 unzip -l /app/storage/app/backups/files_backup_2025-11-24_16-10-17.zip | head -30
+
+# PDFファイルが含まれているか検索
+docker exec shin-on_wiki_app_1 unzip -l /app/storage/app/backups/files_backup_2025-11-24_16-10-17.zip | grep "\.pdf"
+```
+
+#### 本番環境でパーミッション問題が発生した場合
+
+本番環境でもファイルのパーミッションを確認・修正:
+
+```bash
+# 本番環境で実行
+docker compose exec app ls -la /app/storage/uploads/files/
+
+# 必要に応じて権限修正
+docker compose exec app chown -R www-data:www-data /app/storage/uploads/files/
+docker compose exec app chmod -R 755 /app/storage/uploads/files/
+```
+
+---
+
 ## 📅 最終更新日
 
-2025年11月24日
+2025年11月25日
 
 ## 👥 作成者
 
