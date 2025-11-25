@@ -68,7 +68,8 @@ return [
             'public/uploads',   // BookStackのアップロードファイル（画像など）
             'storage/uploads',  // BookStackの添付ファイル（PDFなど）
             'storage/logs',     // ログファイル
-            '.env',             // 環境設定ファイル
+            // 注意: .envは環境固有の設定のため、バックアップ対象から除外
+            // DB_HOST等が環境によって異なるため、復元時に上書きすると問題が発生する
         ],
         'exclude_paths' => [
             'storage/app/public/temp',

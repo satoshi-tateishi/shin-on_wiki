@@ -1344,32 +1344,22 @@ class BackupService
     }
 
     /**
-     * アプリケーションキャッシュをクリアして再生成
-     * シェルコマンドとして実行することで、Webリクエストのコンテキスト外でキャッシュを再生成
+     * アプリケーションキャッシュをクリア
+     * 注意: config:cacheは実行しない（.envの設定が環境固有のため）
+     * キャッシュ再生成はデプロイ時に自動的に行われる
      */
     private function clearApplicationCache(): void
     {
         try {
-            // まずキャッシュをクリア
+            // キャッシュをクリアのみ（再生成はしない）
             Process::run('php /app/artisan cache:clear');
             Process::run('php /app/artisan config:clear');
             Process::run('php /app/artisan route:clear');
             Process::run('php /app/artisan view:clear');
 
-            Log::info('Application cache cleared');
-
-            // キャッシュを再生成（シェルコマンドとして実行）
-            $configResult = Process::run('php /app/artisan config:cache');
-            $routeResult = Process::run('php /app/artisan route:cache');
-            $viewResult = Process::run('php /app/artisan view:cache');
-
-            Log::info('Application cache regenerated', [
-                'config' => $configResult->successful(),
-                'route' => $routeResult->successful(),
-                'view' => $viewResult->successful(),
-            ]);
+            Log::info('Application cache cleared after restore');
         } catch (Exception $e) {
-            Log::warning('Failed to clear/regenerate cache', [
+            Log::warning('Failed to clear cache', [
                 'error' => $e->getMessage(),
             ]);
         }
