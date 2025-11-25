@@ -409,8 +409,8 @@
 
                 const createBackup = confirm('復元前に現在のデータベースをバックアップしますか？\n（強く推奨）');
 
-                // Execute restore
-                showAlert('info', 'データベースを復元中... しばらくお待ちください');
+                // Show progress dialog
+                showProgressDialog('復元中', 'データベースとファイルを復元しています...');
 
                 const restoreResponse = await fetch('/api/backup/restore', {
                     method: 'POST',
@@ -431,12 +431,13 @@
                     const urlsUpdated = restoreData.url_update && restoreData.url_update.updates && Object.keys(restoreData.url_update.updates).length > 0;
 
                     if (urlsUpdated) {
-                        showAlert('success', '✅ データベースの復元が完了しました。キャッシュを再生成中...');
+                        updateProgressDialog('キャッシュ再生成中', 'CSSを反映するためキャッシュを再生成しています...');
                         // 少しディレイを入れて自動でキャッシュ再生成
                         setTimeout(() => {
                             autoRegenerateCache();
                         }, 1000);
                     } else {
+                        hideProgressDialog();
                         showAlert('success', '✅ データベースの復元が完了しました！');
                         setTimeout(() => {
                             if (confirm('復元が完了しました。ページをリロードしますか？')) {
@@ -445,10 +446,12 @@
                         }, 2000);
                     }
                 } else {
+                    hideProgressDialog();
                     showAlert('danger', '❌ 復元失敗: ' + restoreData.error);
                 }
 
             } catch (error) {
+                hideProgressDialog();
                 showAlert('danger', 'エラー: ' + error.message);
             }
         }
@@ -466,6 +469,94 @@
             setTimeout(() => alertDiv.remove(), 10000);
         }
 
+        // Show progress dialog
+        function showProgressDialog(title, message) {
+            // Remove existing dialog if any
+            hideProgressDialog();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'progress-dialog-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const dialog = document.createElement('div');
+            dialog.id = 'progress-dialog';
+            dialog.style.cssText = `
+                background: white;
+                padding: 30px 40px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                max-width: 90%;
+                width: 320px;
+            `;
+
+            dialog.innerHTML = `
+                <div id="progress-dialog-spinner" style="
+                    width: 50px;
+                    height: 50px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #206bc4;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 20px;
+                "></div>
+                <h3 id="progress-dialog-title" style="margin: 0 0 10px; color: #333; font-size: 18px;">${title}</h3>
+                <p id="progress-dialog-message" style="margin: 0; color: #666; font-size: 14px;">${message}</p>
+            `;
+
+            // Add spinner animation
+            const style = document.createElement('style');
+            style.id = 'progress-dialog-style';
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+        }
+
+        // Update progress dialog
+        function updateProgressDialog(title, message) {
+            const titleEl = document.getElementById('progress-dialog-title');
+            const messageEl = document.getElementById('progress-dialog-message');
+            const spinner = document.getElementById('progress-dialog-spinner');
+
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+
+            // Change spinner to checkmark on completion
+            if (title === '完了' && spinner) {
+                spinner.style.animation = 'none';
+                spinner.style.border = 'none';
+                spinner.innerHTML = '✅';
+                spinner.style.fontSize = '40px';
+                spinner.style.lineHeight = '50px';
+            }
+        }
+
+        // Hide progress dialog
+        function hideProgressDialog() {
+            const overlay = document.getElementById('progress-dialog-overlay');
+            const style = document.getElementById('progress-dialog-style');
+            if (overlay) overlay.remove();
+            if (style) style.remove();
+        }
+
         // Auto regenerate cache after restore
         async function autoRegenerateCache() {
             try {
@@ -480,17 +571,19 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showAlert('success', '✅ キャッシュの再生成が完了しました。ページをリロードします...');
+                    updateProgressDialog('完了', '✅ 復元が完了しました。ページをリロードします...');
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
                 } else {
                     // 失敗した場合は手動ボタンを表示
+                    hideProgressDialog();
                     showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
                     showCacheRegenerateButton();
                 }
             } catch (error) {
                 // エラーの場合も手動ボタンを表示
+                hideProgressDialog();
                 showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
                 showCacheRegenerateButton();
             }
