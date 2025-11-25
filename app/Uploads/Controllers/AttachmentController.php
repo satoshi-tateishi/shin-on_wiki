@@ -231,11 +231,12 @@ class AttachmentController extends Controller
         $attachmentStream = $this->attachmentService->streamAttachmentFromStorage($attachment);
         $attachmentSize = $this->attachmentService->getAttachmentFileSize($attachment);
 
-        if ($request->get('open') === 'true') {
-            return $this->download()->streamedInline($attachmentStream, $fileName, $attachmentSize);
+        // デフォルトでプレビュー表示（インライン）、?download=true の場合のみダウンロード
+        if ($request->get('download') === 'true') {
+            return $this->download()->streamedDirectly($attachmentStream, $fileName, $attachmentSize);
         }
 
-        return $this->download()->streamedDirectly($attachmentStream, $fileName, $attachmentSize);
+        return $this->download()->streamedInline($attachmentStream, $fileName, $attachmentSize);
     }
 
     /**

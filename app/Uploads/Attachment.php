@@ -67,14 +67,15 @@ class Attachment extends Model implements OwnableInterface
 
     /**
      * Get the url of this file.
+     * デフォルトでプレビュー表示（インライン）、$forceDownload=true でダウンロード
      */
-    public function getUrl($openInline = false): string
+    public function getUrl(bool $forceDownload = false): string
     {
         if ($this->external && !str_starts_with($this->path, 'http')) {
             return $this->path;
         }
 
-        return url('/attachments/' . $this->id . ($openInline ? '?open=true' : ''));
+        return url('/attachments/' . $this->id . ($forceDownload ? '?download=true' : ''));
     }
 
     /**
@@ -85,7 +86,7 @@ class Attachment extends Model implements OwnableInterface
     {
         $videoExtensions = ['mp4', 'webm', 'mkv', 'ogg', 'avi'];
         if (in_array(strtolower($this->extension), $videoExtensions)) {
-            $html = '<video src="' . e($this->getUrl(true)) . '" controls width="480" height="270"></video>';
+            $html = '<video src="' . e($this->getUrl()) . '" controls width="480" height="270"></video>';
             return ['text/html' => $html, 'text/plain' => $html];
         }
 

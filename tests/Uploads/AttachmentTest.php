@@ -311,7 +311,7 @@ class AttachmentTest extends TestCase
         $html->assertElementExists(".card[data-id=\"{$attachment->id}\"] button[title=\"Edit\"]");
     }
 
-    public function test_file_access_with_open_query_param_provides_inline_response_with_correct_content_type()
+    public function test_file_access_provides_inline_response_with_correct_content_type_by_default()
     {
         $page = $this->entities->page();
         $this->asAdmin();
@@ -321,7 +321,8 @@ class AttachmentTest extends TestCase
         $upload->assertStatus(200);
         $attachment = Attachment::query()->orderBy('id', 'desc')->take(1)->first();
 
-        $attachmentGet = $this->get($attachment->getUrl(true));
+        // デフォルトでインライン表示
+        $attachmentGet = $this->get($attachment->getUrl());
         // http-foundation/Response does some 'fixing' of responses to add charsets to text responses.
         $attachmentGet->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
         $attachmentGet->assertHeader('Content-Disposition', 'inline; filename="upload_test_file.txt"');
@@ -330,14 +331,15 @@ class AttachmentTest extends TestCase
         $this->files->deleteAllAttachmentFiles();
     }
 
-    public function test_html_file_access_with_open_forces_plain_content_type()
+    public function test_html_file_access_forces_plain_content_type_by_default()
     {
         $page = $this->entities->page();
         $this->asAdmin();
 
         $attachment = $this->files->uploadAttachmentDataToPage($this, $page, 'test_file.html', '<html></html><p>testing</p>', 'text/html');
 
-        $attachmentGet = $this->get($attachment->getUrl(true));
+        // デフォルトでインライン表示（HTMLファイルはプレーンテキストとして表示）
+        $attachmentGet = $this->get($attachment->getUrl());
         // http-foundation/Response does some 'fixing' of responses to add charsets to text responses.
         $attachmentGet->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
         $attachmentGet->assertHeader('Content-Disposition', 'inline; filename="test_file.html"');
@@ -367,14 +369,14 @@ class AttachmentTest extends TestCase
         $this->asAdmin();
         $attachment = $this->files->uploadAttachmentDataToPage($this, $page, 'my_text.txt', 'abc123456', 'text/plain');
 
-        // Download access
+        // Inline access (default)
         $resp = $this->get($attachment->getUrl(), ['Range' => 'bytes=3-5']);
         $resp->assertStatus(206);
         $resp->assertStreamedContent('123');
         $resp->assertHeader('Content-Length', '3');
         $resp->assertHeader('Content-Range', 'bytes 3-5/9');
 
-        // Inline access
+        // Download access (with ?download=true)
         $resp = $this->get($attachment->getUrl(true), ['Range' => 'bytes=5-7']);
         $resp->assertStatus(206);
         $resp->assertStreamedContent('345');
