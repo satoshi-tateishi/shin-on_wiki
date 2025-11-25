@@ -1351,28 +1351,90 @@ class BackupService
     }
 
     /**
-     * アプリケーションキャッシュをクリア
-     * 注意: config:cacheはProcess::run()では.envが正しく読み込まれないため実行しない
-     * CSSが反映されない場合は、手動でコンテナを再起動するか config:cache を実行する必要がある
+     * アプリケーションキャッシュをクリアして再生成
+     * .envを直接読み込み、環境変数付きでconfig:cacheを実行することで
+     * 正しいDB_HOSTがキャッシュされるようにする
      */
     private function clearApplicationCache(): void
     {
         try {
-            // Artisan::call()でキャッシュをクリア（Webリクエストのコンテキストで実行）
+            $appPath = base_path();
+
+            // まずキャッシュをクリア
             \Artisan::call('cache:clear');
             \Artisan::call('config:clear');
             \Artisan::call('route:clear');
             \Artisan::call('view:clear');
 
-            Log::info('Application cache cleared after restore');
+            Log::info('Application cache cleared');
 
-            // OPcacheをクリア（PHPの実行コードキャッシュ）
+            // .envファイルを直接読み込んで環境変数を取得
+            $envFile = $appPath . '/.env';
+            $envVars = [];
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos(trim($line), '#') === 0) {
+                        continue;
+                    }
+                    if (strpos($line, '=') !== false) {
+                        list($key, $value) = explode('=', $line, 2);
+                        $key = trim($key);
+                        $value = trim($value);
+                        $value = trim($value, '"\'');
+                        $envVars[$key] = $value;
+                    }
+                }
+            }
+
+            Log::info('Loaded .env for cache regeneration', [
+                'DB_HOST' => $envVars['DB_HOST'] ?? 'not set',
+                'APP_URL' => $envVars['APP_URL'] ?? 'not set',
+            ]);
+
+            // PHPバイナリのパスを取得
+            $phpBinary = PHP_BINARY;
+
+            // 環境変数を文字列として構築
+            $envString = '';
+            foreach ($envVars as $key => $value) {
+                $escapedValue = escapeshellarg($value);
+                $envString .= "{$key}={$escapedValue} ";
+            }
+
+            // 環境変数付きでconfig:cacheを実行
+            $configCmd = "cd {$appPath} && {$envString} {$phpBinary} artisan config:cache 2>&1";
+            exec($configCmd, $configOutput, $configReturn);
+
+            // route:cacheとview:cacheも実行
+            $routeCmd = "cd {$appPath} && {$phpBinary} artisan route:cache 2>&1";
+            $viewCmd = "cd {$appPath} && {$phpBinary} artisan view:cache 2>&1";
+            exec($routeCmd, $routeOutput, $routeReturn);
+            exec($viewCmd, $viewOutput, $viewReturn);
+
+            // キャッシュされたDB_HOSTを確認
+            $configCachePath = $appPath . '/bootstrap/cache/config.php';
+            $cachedDbHost = 'unknown';
+            if (file_exists($configCachePath)) {
+                $configContent = file_get_contents($configCachePath);
+                if (preg_match("/'host'\s*=>\s*'([^']+)'/", $configContent, $matches)) {
+                    $cachedDbHost = $matches[1];
+                }
+            }
+
+            Log::info('Cache regenerated after restore', [
+                'config_return' => $configReturn,
+                'config_output' => implode("\n", $configOutput),
+                'cached_db_host' => $cachedDbHost,
+            ]);
+
+            // OPcacheをクリア
             if (function_exists('opcache_reset')) {
                 opcache_reset();
                 Log::info('OPcache reset');
             }
         } catch (Exception $e) {
-            Log::error('Failed to clear cache', [
+            Log::error('Failed to clear/regenerate cache', [
                 'error' => $e->getMessage(),
             ]);
         }
