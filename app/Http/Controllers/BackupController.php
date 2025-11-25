@@ -477,24 +477,6 @@ class BackupController extends Controller
 
             $appPath = base_path();
 
-            // .envファイルから環境変数を読み込んでputenv()で設定
-            $envFile = $appPath . '/.env';
-            if (file_exists($envFile)) {
-                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                foreach ($lines as $line) {
-                    if (strpos($line, '#') === 0) continue;
-                    if (strpos($line, '=') === false) continue;
-                    putenv($line);
-                    // $_ENV と $_SERVER にも設定
-                    list($key, $value) = explode('=', $line, 2);
-                    $_ENV[$key] = $value;
-                    $_SERVER[$key] = $value;
-                }
-            }
-
-            // 設定リポジトリをクリアして再読み込み
-            app('config')->set('database.connections.mysql.host', env('DB_HOST', 'db'));
-
             // キャッシュをクリア
             \Artisan::call('cache:clear');
             \Artisan::call('config:clear');
@@ -503,19 +485,20 @@ class BackupController extends Controller
 
             Log::info('Cache cleared, now regenerating...');
 
-            // シェルでキャッシュを再生成（bash -c で環境変数を明示的に設定）
-            $dbHost = env('DB_HOST', 'db');
-            $cmd = "cd {$appPath} && DB_HOST={$dbHost} php artisan config:cache 2>&1";
-            exec($cmd, $configOutput, $configReturn);
+            // bash -c で .env を source してからキャッシュを再生成
+            // set -a で全ての変数を自動的にexport
+            $configCmd = "bash -c 'set -a && source {$appPath}/.env && set +a && cd {$appPath} && php artisan config:cache' 2>&1";
+            $routeCmd = "bash -c 'cd {$appPath} && php artisan route:cache' 2>&1";
+            $viewCmd = "bash -c 'cd {$appPath} && php artisan view:cache' 2>&1";
 
-            exec("cd {$appPath} && php artisan route:cache 2>&1", $routeOutput, $routeReturn);
-            exec("cd {$appPath} && php artisan view:cache 2>&1", $viewOutput, $viewReturn);
+            exec($configCmd, $configOutput, $configReturn);
+            exec($routeCmd, $routeOutput, $routeReturn);
+            exec($viewCmd, $viewOutput, $viewReturn);
 
             $success = ($configReturn === 0 && $routeReturn === 0 && $viewReturn === 0);
 
             Log::info('Cache regeneration completed', [
                 'success' => $success,
-                'db_host' => $dbHost,
                 'config_cache' => ['return' => $configReturn, 'output' => implode("\n", $configOutput)],
                 'route_cache' => ['return' => $routeReturn, 'output' => implode("\n", $routeOutput)],
                 'view_cache' => ['return' => $viewReturn, 'output' => implode("\n", $viewOutput)],
