@@ -765,7 +765,14 @@ class BackupService
                 ]);
             }
 
-            // .env ファイルは復元しない（セキュリティ上の理由）
+            // .env ファイルは復元しない（環境固有の設定のため）
+            // 古いバックアップに.envが含まれている場合は明示的に削除
+            $envInBackup = $tempExtractDir . '/.env';
+            if (File::exists($envInBackup)) {
+                File::delete($envInBackup);
+                Log::info('.env file found in backup but skipped (not restored)');
+            }
+
             // ログファイルも復元しない
 
             // 一時ディレクトリを削除
@@ -1349,18 +1356,20 @@ class BackupService
     private function clearApplicationCache(): void
     {
         try {
+            $appPath = base_path();
+
             // キャッシュをクリア
-            Process::run('php /app/artisan cache:clear');
-            Process::run('php /app/artisan config:clear');
-            Process::run('php /app/artisan route:clear');
-            Process::run('php /app/artisan view:clear');
+            Process::path($appPath)->run('php artisan cache:clear');
+            Process::path($appPath)->run('php artisan config:clear');
+            Process::path($appPath)->run('php artisan route:clear');
+            Process::path($appPath)->run('php artisan view:clear');
 
             Log::info('Application cache cleared');
 
-            // キャッシュを再生成
-            Process::run('php /app/artisan config:cache');
-            Process::run('php /app/artisan route:cache');
-            Process::run('php /app/artisan view:cache');
+            // キャッシュを再生成（アプリケーションルートで実行して正しい.envを読み込む）
+            Process::path($appPath)->run('php artisan config:cache');
+            Process::path($appPath)->run('php artisan route:cache');
+            Process::path($appPath)->run('php artisan view:cache');
 
             Log::info('Application cache regenerated after restore');
         } catch (Exception $e) {
