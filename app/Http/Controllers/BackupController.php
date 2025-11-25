@@ -477,13 +477,15 @@ class BackupController extends Controller
 
             $appPath = base_path();
 
-            // キャッシュをクリア
-            \Artisan::call('cache:clear');
-            \Artisan::call('config:clear');
-            \Artisan::call('route:clear');
-            \Artisan::call('view:clear');
+            // 注意: config:clear は呼ばない
+            // config:clear を呼ぶと config.php が削除され、
+            // 次のリクエストで DB_HOST が正しく解決されずエラーになる
+            // config:cache は既存のキャッシュを上書きするので、事前のクリアは不要
 
-            Log::info('Cache cleared, now regenerating...');
+            // cache:clear のみ実行（これは安全）
+            \Artisan::call('cache:clear');
+
+            Log::info('Cache cleared (config kept), now regenerating...');
 
             // .envファイルを直接読み込んで環境変数を設定
             $envFile = $appPath . '/.env';
