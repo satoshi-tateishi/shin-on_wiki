@@ -490,11 +490,11 @@ class BackupController extends Controller
             // PHPバイナリのパスを取得
             $phpBinary = PHP_BINARY;
 
-            // シンプルにartisanコマンドを実行
-            // config:cache は .env を自動的に読み込む
-            $configCmd = "cd {$appPath} && {$phpBinary} artisan config:cache 2>&1";
-            $routeCmd = "cd {$appPath} && {$phpBinary} artisan route:cache 2>&1";
-            $viewCmd = "cd {$appPath} && {$phpBinary} artisan view:cache 2>&1";
+            // フルパスでartisanを指定
+            $artisanPath = $appPath . '/artisan';
+            $configCmd = "{$phpBinary} {$artisanPath} config:cache 2>&1";
+            $routeCmd = "{$phpBinary} {$artisanPath} route:cache 2>&1";
+            $viewCmd = "{$phpBinary} {$artisanPath} view:cache 2>&1";
 
             Log::info('Executing cache commands', [
                 'php_binary' => $phpBinary,
