@@ -1160,4 +1160,204 @@ class BackupService
             ];
         }
     }
+
+    /**
+     * 復元後にURLを自動変換
+     * データベース内の古いURLを現在の環境のAPP_URLに変換する
+     */
+    public function autoUpdateUrls(): array
+    {
+        try {
+            $currentAppUrl = rtrim(config('app.url'), '/');
+
+            if (empty($currentAppUrl)) {
+                throw new Exception('APP_URLが設定されていません');
+            }
+
+            Log::info('Starting auto URL update', [
+                'target_url' => $currentAppUrl,
+            ]);
+
+            // データベース内の既存URLパターンを検出
+            $detectedUrls = $this->detectExistingUrls();
+
+            if (empty($detectedUrls)) {
+                Log::info('No URLs found to update');
+                return [
+                    'success' => true,
+                    'message' => '変換が必要なURLは見つかりませんでした',
+                    'updates' => [],
+                ];
+            }
+
+            $updates = [];
+
+            foreach ($detectedUrls as $oldUrl) {
+                // 現在のAPP_URLと同じ場合はスキップ
+                if ($oldUrl === $currentAppUrl) {
+                    Log::info('Skipping URL update - same as current', [
+                        'url' => $oldUrl,
+                    ]);
+                    continue;
+                }
+
+                Log::info('Updating URLs', [
+                    'old_url' => $oldUrl,
+                    'new_url' => $currentAppUrl,
+                ]);
+
+                $result = $this->replaceUrlsInDatabase($oldUrl, $currentAppUrl);
+                $updates[$oldUrl] = $result;
+            }
+
+            // キャッシュクリア
+            $this->clearApplicationCache();
+
+            Log::info('Auto URL update completed', [
+                'updates' => $updates,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'URLの自動変換が完了しました',
+                'target_url' => $currentAppUrl,
+                'updates' => $updates,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Auto URL update failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * データベース内の既存URLパターンを検出
+     */
+    private function detectExistingUrls(): array
+    {
+        $urls = [];
+
+        // imagesテーブルからURLパターンを検出
+        $imageUrls = DB::table('images')
+            ->select(DB::raw("DISTINCT SUBSTRING_INDEX(url, '/uploads/', 1) as base_url"))
+            ->whereNotNull('url')
+            ->where('url', 'like', 'http%')
+            ->pluck('base_url')
+            ->toArray();
+
+        foreach ($imageUrls as $url) {
+            if (!empty($url) && !in_array($url, $urls)) {
+                $urls[] = $url;
+            }
+        }
+
+        // attachmentsテーブルからもチェック
+        $attachmentUrls = DB::table('attachments')
+            ->select(DB::raw("DISTINCT SUBSTRING_INDEX(path, '/uploads/', 1) as base_url"))
+            ->whereNotNull('path')
+            ->where('path', 'like', 'http%')
+            ->pluck('base_url')
+            ->toArray();
+
+        foreach ($attachmentUrls as $url) {
+            if (!empty($url) && !in_array($url, $urls)) {
+                $urls[] = $url;
+            }
+        }
+
+        Log::info('Detected existing URLs in database', [
+            'urls' => $urls,
+        ]);
+
+        return $urls;
+    }
+
+    /**
+     * データベース内のURLを置換
+     */
+    private function replaceUrlsInDatabase(string $oldUrl, string $newUrl): array
+    {
+        $results = [];
+
+        $columnsToUpdateByTable = [
+            'attachments' => ['path'],
+            'entity_page_data' => ['html', 'text', 'markdown'],
+            'entity_container_data' => ['description_html'],
+            'page_revisions' => ['html', 'text', 'markdown'],
+            'images' => ['url'],
+            'settings' => ['value'],
+            'comments' => ['html'],
+        ];
+
+        foreach ($columnsToUpdateByTable as $table => $columns) {
+            foreach ($columns as $column) {
+                try {
+                    $oldQuoted = DB::getPdo()->quote($oldUrl);
+                    $newQuoted = DB::getPdo()->quote($newUrl);
+
+                    $changeCount = DB::table($table)->update([
+                        $column => DB::raw("REPLACE({$column}, {$oldQuoted}, {$newQuoted})"),
+                    ]);
+
+                    $results["{$table}.{$column}"] = $changeCount;
+
+                    if ($changeCount > 0) {
+                        Log::info("Updated URLs in {$table}->{$column}", [
+                            'count' => $changeCount,
+                        ]);
+                    }
+                } catch (Exception $e) {
+                    Log::warning("Failed to update {$table}->{$column}", [
+                        'error' => $e->getMessage(),
+                    ]);
+                    $results["{$table}.{$column}"] = "error: {$e->getMessage()}";
+                }
+            }
+        }
+
+        // JSON形式のURLも置換
+        $oldJson = trim(json_encode($oldUrl), '"');
+        $newJson = trim(json_encode($newUrl), '"');
+
+        try {
+            $oldJsonQuoted = DB::getPdo()->quote($oldJson);
+            $newJsonQuoted = DB::getPdo()->quote($newJson);
+
+            $changeCount = DB::table('settings')->update([
+                'value' => DB::raw("REPLACE(value, {$oldJsonQuoted}, {$newJsonQuoted})"),
+            ]);
+
+            $results['settings.value_json'] = $changeCount;
+        } catch (Exception $e) {
+            Log::warning('Failed to update JSON encoded URLs in settings', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $results;
+    }
+
+    /**
+     * アプリケーションキャッシュをクリア
+     */
+    private function clearApplicationCache(): void
+    {
+        try {
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            \Artisan::call('view:clear');
+
+            Log::info('Application cache cleared after URL update');
+        } catch (Exception $e) {
+            Log::warning('Failed to clear cache', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }

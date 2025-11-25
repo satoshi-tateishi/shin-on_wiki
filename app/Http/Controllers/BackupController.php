@@ -332,6 +332,9 @@ class BackupController extends Controller
                 $filesRestoreResult = $this->backupService->restoreFiles($filesBackupZip);
             }
 
+            // URL自動変換（復元元と復元先のAPP_URLが異なる場合に自動で変換）
+            $urlUpdateResult = $this->backupService->autoUpdateUrls();
+
             // クリーンアップ
             $this->backupService->cleanupRestoreFiles($timestamp);
 
@@ -340,6 +343,7 @@ class BackupController extends Controller
                 'message' => 'データベースとファイルの復元が完了しました',
                 'database_restore' => $restoreResult,
                 'files_restore' => $filesRestoreResult,
+                'url_update' => $urlUpdateResult,
             ]);
 
         } catch (Exception $e) {
