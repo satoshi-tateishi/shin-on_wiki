@@ -1351,50 +1351,29 @@ class BackupService
     }
 
     /**
-     * アプリケーションキャッシュをクリアして再生成
+     * アプリケーションキャッシュをクリア
+     * 注意: config:cacheはProcess::run()では.envが正しく読み込まれないため実行しない
+     * CSSが反映されない場合は、手動でコンテナを再起動するか config:cache を実行する必要がある
      */
     private function clearApplicationCache(): void
     {
         try {
-            $appPath = base_path();
+            // Artisan::call()でキャッシュをクリア（Webリクエストのコンテキストで実行）
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            \Artisan::call('route:clear');
+            \Artisan::call('view:clear');
 
-            Log::info('Starting cache clear/regenerate', ['app_path' => $appPath]);
+            Log::info('Application cache cleared after restore');
 
-            // キャッシュをクリア
-            $results = [];
-            $results['cache_clear'] = Process::path($appPath)->run('php artisan cache:clear')->output();
-            $results['config_clear'] = Process::path($appPath)->run('php artisan config:clear')->output();
-            $results['route_clear'] = Process::path($appPath)->run('php artisan route:clear')->output();
-            $results['view_clear'] = Process::path($appPath)->run('php artisan view:clear')->output();
-
-            Log::info('Application cache cleared', $results);
-
-            // キャッシュを再生成（アプリケーションルートで実行して正しい.envを読み込む）
-            $configCache = Process::path($appPath)->run('php artisan config:cache');
-            $routeCache = Process::path($appPath)->run('php artisan route:cache');
-            $viewCache = Process::path($appPath)->run('php artisan view:cache');
-
-            Log::info('Application cache regenerated after restore', [
-                'config_cache' => [
-                    'success' => $configCache->successful(),
-                    'output' => $configCache->output(),
-                    'error' => $configCache->errorOutput(),
-                ],
-                'route_cache' => [
-                    'success' => $routeCache->successful(),
-                    'output' => $routeCache->output(),
-                    'error' => $routeCache->errorOutput(),
-                ],
-                'view_cache' => [
-                    'success' => $viewCache->successful(),
-                    'output' => $viewCache->output(),
-                    'error' => $viewCache->errorOutput(),
-                ],
-            ]);
+            // OPcacheをクリア（PHPの実行コードキャッシュ）
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+                Log::info('OPcache reset');
+            }
         } catch (Exception $e) {
-            Log::error('Failed to clear/regenerate cache', [
+            Log::error('Failed to clear cache', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
         }
     }

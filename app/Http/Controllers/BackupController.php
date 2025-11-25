@@ -338,9 +338,14 @@ class BackupController extends Controller
             // クリーンアップ
             $this->backupService->cleanupRestoreFiles($timestamp);
 
+            // URLが更新された場合はキャッシュ再生成が必要
+            $urlsUpdated = !empty($urlUpdateResult['updates']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'データベースとファイルの復元が完了しました',
+                'message' => $urlsUpdated
+                    ? 'データベースとファイルの復元が完了しました。CSSを反映するにはページをリロードしてください。'
+                    : 'データベースとファイルの復元が完了しました',
                 'database_restore' => $restoreResult,
                 'files_restore' => $filesRestoreResult,
                 'url_update' => $urlUpdateResult,
