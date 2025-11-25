@@ -433,16 +433,16 @@
                 const restoreData = await restoreResponse.json();
 
                 if (restoreData.success) {
-                    hideProgressDialog();
-
                     // URLが更新された場合はキャッシュ再生成が必要
                     const urlsUpdated = restoreData.url_update && restoreData.url_update.updates && Object.keys(restoreData.url_update.updates).length > 0;
 
                     if (urlsUpdated) {
-                        showAlert('success', '✅ データベースの復元が完了しました！');
-                        // キャッシュ再生成ボタンを表示
-                        showCacheRegenerateButton();
+                        // プログレスダイアログを更新してキャッシュ再生成中を表示
+                        updateProgressDialog('キャッシュ再生成中', 'CSSを正しく反映するためキャッシュを再生成しています...');
+                        // 自動でキャッシュ再生成を実行
+                        await autoRegenerateCache();
                     } else {
+                        hideProgressDialog();
                         showAlert('success', '✅ データベースの復元が完了しました！');
                         setTimeout(() => {
                             if (confirm('復元が完了しました。ページをリロードしますか？')) {
@@ -590,6 +590,49 @@
 
             // Add click handler
             document.getElementById('cache-regenerate-btn').addEventListener('click', manualRegenerateCache);
+        }
+
+        // Update progress dialog
+        function updateProgressDialog(title, message) {
+            const titleEl = document.getElementById('progress-dialog-title');
+            const messageEl = document.getElementById('progress-dialog-message');
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+        }
+
+        // Auto regenerate cache after restore
+        async function autoRegenerateCache() {
+            try {
+                const response = await fetch('/api/backup/regenerate-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                const data = await response.json();
+
+                hideProgressDialog();
+
+                if (data.success) {
+                    showAlert('success', '✅ 復元とキャッシュ再生成が完了しました！');
+                    setTimeout(() => {
+                        if (confirm('復元が完了しました。ページをリロードしますか？')) {
+                            window.location.reload();
+                        }
+                    }, 2000);
+                } else {
+                    // 自動実行失敗時はボタンを表示してフォールバック
+                    showAlert('warning', '⚠️ キャッシュ自動再生成に失敗。手動で実行してください。');
+                    showCacheRegenerateButton();
+                }
+            } catch (error) {
+                hideProgressDialog();
+                // 自動実行失敗時はボタンを表示してフォールバック
+                showAlert('warning', '⚠️ キャッシュ自動再生成に失敗。手動で実行してください: ' + error.message);
+                showCacheRegenerateButton();
+            }
         }
 
         // Manual regenerate cache (when auto fails)
