@@ -321,6 +321,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/backup/restore', [\BookStack\Http\Controllers\BackupController::class, 'restoreDatabase']);
     Route::post('/api/backup/validate-restore', [\BookStack\Http\Controllers\BackupController::class, 'validateRestore']);
     Route::post('/api/backup/cleanup', [\BookStack\Http\Controllers\BackupController::class, 'cleanupBackups']);
+    Route::post('/api/backup/regenerate-cache', [\BookStack\Http\Controllers\BackupController::class, 'regenerateCache']);
 
     // Settings
     Route::get('/settings', [SettingControllers\SettingController::class, 'index'])->name('settings');

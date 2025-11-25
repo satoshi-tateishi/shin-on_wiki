@@ -462,4 +462,69 @@ class BackupController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * キャッシュを再生成（復元後のCSS反映用）
+     */
+    public function regenerateCache(): JsonResponse
+    {
+        $this->checkPermission(Permission::SettingsManage);
+
+        try {
+            Log::info('Cache regeneration requested from settings panel', [
+                'user_id' => auth()->id(),
+            ]);
+
+            // シェルコマンドとして実行（環境変数を正しく読み込むため）
+            $appPath = base_path();
+
+            // キャッシュをクリア
+            exec("cd {$appPath} && php artisan cache:clear 2>&1", $output1, $return1);
+            exec("cd {$appPath} && php artisan config:clear 2>&1", $output2, $return2);
+            exec("cd {$appPath} && php artisan route:clear 2>&1", $output3, $return3);
+            exec("cd {$appPath} && php artisan view:clear 2>&1", $output4, $return4);
+
+            // キャッシュを再生成
+            exec("cd {$appPath} && php artisan config:cache 2>&1", $output5, $return5);
+            exec("cd {$appPath} && php artisan route:cache 2>&1", $output6, $return6);
+            exec("cd {$appPath} && php artisan view:cache 2>&1", $output7, $return7);
+
+            $success = ($return5 === 0 && $return6 === 0 && $return7 === 0);
+
+            Log::info('Cache regeneration completed', [
+                'success' => $success,
+                'config_cache' => ['return' => $return5, 'output' => implode("\n", $output5)],
+                'route_cache' => ['return' => $return6, 'output' => implode("\n", $output6)],
+                'view_cache' => ['return' => $return7, 'output' => implode("\n", $output7)],
+            ]);
+
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'キャッシュの再生成が完了しました。ページをリロードしてください。',
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'キャッシュの再生成に失敗しました',
+                    'details' => [
+                        'config' => implode("\n", $output5),
+                        'route' => implode("\n", $output6),
+                        'view' => implode("\n", $output7),
+                    ],
+                ], 500);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Cache regeneration failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'キャッシュ再生成中にエラーが発生しました: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }
