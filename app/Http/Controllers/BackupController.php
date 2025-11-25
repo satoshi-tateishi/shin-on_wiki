@@ -487,57 +487,19 @@ class BackupController extends Controller
 
             Log::info('Cache cleared (config kept), now regenerating...');
 
-            // .envファイルを直接読み込んで環境変数を設定
-            $envFile = $appPath . '/.env';
-            $envVars = [];
-            if (file_exists($envFile)) {
-                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                foreach ($lines as $line) {
-                    // コメント行をスキップ
-                    if (strpos(trim($line), '#') === 0) {
-                        continue;
-                    }
-                    // KEY=VALUE形式を解析
-                    if (strpos($line, '=') !== false) {
-                        list($key, $value) = explode('=', $line, 2);
-                        $key = trim($key);
-                        $value = trim($value);
-                        // クォートを除去
-                        $value = trim($value, '"\'');
-                        $envVars[$key] = $value;
-                    }
-                }
-            }
-
-            // 環境変数を設定
-            foreach ($envVars as $key => $value) {
-                putenv("{$key}={$value}");
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
-            }
-
-            Log::info('Environment variables loaded from .env', [
-                'DB_HOST' => $envVars['DB_HOST'] ?? 'not set',
-                'APP_URL' => $envVars['APP_URL'] ?? 'not set',
-            ]);
-
             // PHPバイナリのパスを取得
             $phpBinary = PHP_BINARY;
 
-            // 環境変数を文字列として構築
-            $envString = '';
-            foreach ($envVars as $key => $value) {
-                // シェルで安全にエスケープ
-                $escapedValue = escapeshellarg($value);
-                $envString .= "{$key}={$escapedValue} ";
-            }
-
-            // 環境変数付きでartisanコマンドを実行
-            $configCmd = "cd {$appPath} && {$envString} {$phpBinary} artisan config:cache 2>&1";
+            // シンプルにartisanコマンドを実行
+            // config:cache は .env を自動的に読み込む
+            $configCmd = "cd {$appPath} && {$phpBinary} artisan config:cache 2>&1";
             $routeCmd = "cd {$appPath} && {$phpBinary} artisan route:cache 2>&1";
             $viewCmd = "cd {$appPath} && {$phpBinary} artisan view:cache 2>&1";
 
-            Log::info('Executing config:cache command', ['command' => $configCmd]);
+            Log::info('Executing cache commands', [
+                'php_binary' => $phpBinary,
+                'app_path' => $appPath,
+            ]);
 
             exec($configCmd, $configOutput, $configReturn);
             exec($routeCmd, $routeOutput, $routeReturn);
