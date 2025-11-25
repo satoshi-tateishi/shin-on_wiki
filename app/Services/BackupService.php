@@ -1358,23 +1358,43 @@ class BackupService
         try {
             $appPath = base_path();
 
-            // キャッシュをクリア
-            Process::path($appPath)->run('php artisan cache:clear');
-            Process::path($appPath)->run('php artisan config:clear');
-            Process::path($appPath)->run('php artisan route:clear');
-            Process::path($appPath)->run('php artisan view:clear');
+            Log::info('Starting cache clear/regenerate', ['app_path' => $appPath]);
 
-            Log::info('Application cache cleared');
+            // キャッシュをクリア
+            $results = [];
+            $results['cache_clear'] = Process::path($appPath)->run('php artisan cache:clear')->output();
+            $results['config_clear'] = Process::path($appPath)->run('php artisan config:clear')->output();
+            $results['route_clear'] = Process::path($appPath)->run('php artisan route:clear')->output();
+            $results['view_clear'] = Process::path($appPath)->run('php artisan view:clear')->output();
+
+            Log::info('Application cache cleared', $results);
 
             // キャッシュを再生成（アプリケーションルートで実行して正しい.envを読み込む）
-            Process::path($appPath)->run('php artisan config:cache');
-            Process::path($appPath)->run('php artisan route:cache');
-            Process::path($appPath)->run('php artisan view:cache');
+            $configCache = Process::path($appPath)->run('php artisan config:cache');
+            $routeCache = Process::path($appPath)->run('php artisan route:cache');
+            $viewCache = Process::path($appPath)->run('php artisan view:cache');
 
-            Log::info('Application cache regenerated after restore');
+            Log::info('Application cache regenerated after restore', [
+                'config_cache' => [
+                    'success' => $configCache->successful(),
+                    'output' => $configCache->output(),
+                    'error' => $configCache->errorOutput(),
+                ],
+                'route_cache' => [
+                    'success' => $routeCache->successful(),
+                    'output' => $routeCache->output(),
+                    'error' => $routeCache->errorOutput(),
+                ],
+                'view_cache' => [
+                    'success' => $viewCache->successful(),
+                    'output' => $viewCache->output(),
+                    'error' => $viewCache->errorOutput(),
+                ],
+            ]);
         } catch (Exception $e) {
-            Log::warning('Failed to clear/regenerate cache', [
+            Log::error('Failed to clear/regenerate cache', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
