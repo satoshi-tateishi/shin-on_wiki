@@ -740,26 +740,57 @@ class BackupService
             $zip->extractTo($tempExtractDir);
             $zip->close();
 
-            // ファイルを復元（public/uploadsのみ）
-            $sourceUploadDir = $tempExtractDir . '/public/uploads';
-            $targetUploadDir = base_path('public/uploads');
+            $restoredPaths = [];
 
-            if (File::exists($sourceUploadDir)) {
+            // 1. public/uploads を復元（画像ファイル）
+            $sourcePublicUploads = $tempExtractDir . '/public/uploads';
+            $targetPublicUploads = base_path('public/uploads');
+
+            if (File::exists($sourcePublicUploads)) {
                 // 既存のアップロードディレクトリをバックアップ
-                $backupUploadDir = base_path('public/uploads_backup_'.time());
-                if (File::exists($targetUploadDir)) {
-                    File::moveDirectory($targetUploadDir, $backupUploadDir);
-                    Log::info('Backed up existing uploads directory', [
-                        'backup_dir' => $backupUploadDir,
+                $backupPublicUploads = base_path('public/uploads_backup_'.time());
+                if (File::exists($targetPublicUploads)) {
+                    File::moveDirectory($targetPublicUploads, $backupPublicUploads);
+                    Log::info('Backed up existing public/uploads directory', [
+                        'backup_dir' => $backupPublicUploads,
                     ]);
                 }
 
                 // 復元
-                File::copyDirectory($sourceUploadDir, $targetUploadDir);
+                File::copyDirectory($sourcePublicUploads, $targetPublicUploads);
+                $restoredPaths[] = 'public/uploads';
 
-                Log::info('Files restored successfully', [
-                    'source' => $sourceUploadDir,
-                    'target' => $targetUploadDir,
+                Log::info('public/uploads restored successfully', [
+                    'source' => $sourcePublicUploads,
+                    'target' => $targetPublicUploads,
+                ]);
+            }
+
+            // 2. storage/uploads を復元（添付ファイル：PDFなど）
+            $sourceStorageUploads = $tempExtractDir . '/storage/uploads';
+            $targetStorageUploads = storage_path('uploads');
+
+            if (File::exists($sourceStorageUploads)) {
+                // 既存のストレージアップロードディレクトリをバックアップ
+                $backupStorageUploads = storage_path('uploads_backup_'.time());
+                if (File::exists($targetStorageUploads)) {
+                    File::moveDirectory($targetStorageUploads, $backupStorageUploads);
+                    Log::info('Backed up existing storage/uploads directory', [
+                        'backup_dir' => $backupStorageUploads,
+                    ]);
+                }
+
+                // 復元
+                File::copyDirectory($sourceStorageUploads, $targetStorageUploads);
+                $restoredPaths[] = 'storage/uploads';
+
+                Log::info('storage/uploads restored successfully', [
+                    'source' => $sourceStorageUploads,
+                    'target' => $targetStorageUploads,
+                ]);
+            } else {
+                Log::warning('storage/uploads not found in backup', [
+                    'expected_path' => $sourceStorageUploads,
                 ]);
             }
 
@@ -776,6 +807,7 @@ class BackupService
             return [
                 'success' => true,
                 'message' => 'ファイルの復元が完了しました',
+                'restored_paths' => $restoredPaths,
                 'thumbnail_regeneration' => $thumbnailResult,
             ];
 

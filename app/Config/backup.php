@@ -65,7 +65,8 @@ return [
         'enabled' => true,
         'filename_format' => 'files_backup_{timestamp}.zip',
         'paths' => [
-            'public/uploads',   // BookStackのアップロードファイル
+            'public/uploads',   // BookStackのアップロードファイル（画像など）
+            'storage/uploads',  // BookStackの添付ファイル（PDFなど）
             'storage/logs',     // ログファイル
             '.env',             // 環境設定ファイル
         ],
