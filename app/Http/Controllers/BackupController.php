@@ -475,19 +475,32 @@ class BackupController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            // シェルコマンドとして実行（環境変数を正しく読み込むため）
             $appPath = base_path();
 
-            // キャッシュをクリア
-            exec("cd {$appPath} && php artisan cache:clear 2>&1", $output1, $return1);
-            exec("cd {$appPath} && php artisan config:clear 2>&1", $output2, $return2);
-            exec("cd {$appPath} && php artisan route:clear 2>&1", $output3, $return3);
-            exec("cd {$appPath} && php artisan view:clear 2>&1", $output4, $return4);
+            // .envファイルから環境変数を読み込んでexportコマンドを生成
+            $envFile = $appPath . '/.env';
+            $envVars = '';
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos($line, '#') === 0) continue; // コメントをスキップ
+                    if (strpos($line, '=') === false) continue;
+                    // シェルで使用するためにエスケープ
+                    $line = str_replace('"', '\\"', $line);
+                    $envVars .= "export \"{$line}\" && ";
+                }
+            }
 
-            // キャッシュを再生成
-            exec("cd {$appPath} && php artisan config:cache 2>&1", $output5, $return5);
-            exec("cd {$appPath} && php artisan route:cache 2>&1", $output6, $return6);
-            exec("cd {$appPath} && php artisan view:cache 2>&1", $output7, $return7);
+            // キャッシュをクリア
+            exec("cd {$appPath} && {$envVars} php artisan cache:clear 2>&1", $output1, $return1);
+            exec("cd {$appPath} && {$envVars} php artisan config:clear 2>&1", $output2, $return2);
+            exec("cd {$appPath} && {$envVars} php artisan route:clear 2>&1", $output3, $return3);
+            exec("cd {$appPath} && {$envVars} php artisan view:clear 2>&1", $output4, $return4);
+
+            // キャッシュを再生成（.envの環境変数を明示的に設定）
+            exec("cd {$appPath} && {$envVars} php artisan config:cache 2>&1", $output5, $return5);
+            exec("cd {$appPath} && {$envVars} php artisan route:cache 2>&1", $output6, $return6);
+            exec("cd {$appPath} && {$envVars} php artisan view:cache 2>&1", $output7, $return7);
 
             $success = ($return5 === 0 && $return6 === 0 && $return7 === 0);
 
