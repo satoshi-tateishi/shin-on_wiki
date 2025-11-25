@@ -743,27 +743,13 @@ class BackupService
             $restoredPaths = [];
 
             // 1. public/uploads を復元（画像ファイル）
+            // 本番環境ではシンボリックリンク構成の場合があるため、サブディレクトリごとに処理
             $sourcePublicUploads = $tempExtractDir . '/public/uploads';
             $targetPublicUploads = base_path('public/uploads');
 
             if (File::exists($sourcePublicUploads)) {
-                // 既存のアップロードディレクトリをバックアップ
-                $backupPublicUploads = base_path('public/uploads_backup_'.time());
-                if (File::exists($targetPublicUploads)) {
-                    File::moveDirectory($targetPublicUploads, $backupPublicUploads);
-                    Log::info('Backed up existing public/uploads directory', [
-                        'backup_dir' => $backupPublicUploads,
-                    ]);
-                }
-
-                // 復元
-                File::copyDirectory($sourcePublicUploads, $targetPublicUploads);
+                $this->restoreUploadsDirectory($sourcePublicUploads, $targetPublicUploads);
                 $restoredPaths[] = 'public/uploads';
-
-                Log::info('public/uploads restored successfully', [
-                    'source' => $sourcePublicUploads,
-                    'target' => $targetPublicUploads,
-                ]);
             }
 
             // 2. storage/uploads を復元（添付ファイル：PDFなど）
@@ -771,23 +757,8 @@ class BackupService
             $targetStorageUploads = storage_path('uploads');
 
             if (File::exists($sourceStorageUploads)) {
-                // 既存のストレージアップロードディレクトリをバックアップ
-                $backupStorageUploads = storage_path('uploads_backup_'.time());
-                if (File::exists($targetStorageUploads)) {
-                    File::moveDirectory($targetStorageUploads, $backupStorageUploads);
-                    Log::info('Backed up existing storage/uploads directory', [
-                        'backup_dir' => $backupStorageUploads,
-                    ]);
-                }
-
-                // 復元
-                File::copyDirectory($sourceStorageUploads, $targetStorageUploads);
+                $this->restoreUploadsDirectory($sourceStorageUploads, $targetStorageUploads);
                 $restoredPaths[] = 'storage/uploads';
-
-                Log::info('storage/uploads restored successfully', [
-                    'source' => $sourceStorageUploads,
-                    'target' => $targetStorageUploads,
-                ]);
             } else {
                 Log::warning('storage/uploads not found in backup', [
                     'expected_path' => $sourceStorageUploads,
@@ -827,6 +798,83 @@ class BackupService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * アップロードディレクトリを復元（シンボリックリンク対応）
+     */
+    private function restoreUploadsDirectory(string $sourceDir, string $targetDir): void
+    {
+        // ターゲットディレクトリが存在しない場合は作成
+        if (! File::exists($targetDir)) {
+            File::makeDirectory($targetDir, 0755, true);
+        }
+
+        // ソースディレクトリ内のアイテムを処理
+        $items = File::directories($sourceDir);
+        $files = File::files($sourceDir);
+
+        // ファイルを直接コピー
+        foreach ($files as $file) {
+            $targetFile = $targetDir . '/' . $file->getFilename();
+            File::copy($file->getRealPath(), $targetFile);
+        }
+
+        // サブディレクトリを処理
+        foreach ($items as $item) {
+            $itemName = basename($item);
+            $targetPath = $targetDir . '/' . $itemName;
+
+            // ターゲットがシンボリックリンクの場合、リンク先に復元
+            if (is_link($targetPath)) {
+                $linkTarget = readlink($targetPath);
+                // 相対パスを絶対パスに変換
+                if (! str_starts_with($linkTarget, '/')) {
+                    $realTarget = realpath($targetDir . '/' . $linkTarget);
+                    if ($realTarget === false) {
+                        // リンク先が存在しない場合は作成
+                        $realTarget = $targetDir . '/' . $linkTarget;
+                        File::makeDirectory($realTarget, 0755, true);
+                    }
+                    $targetPath = $realTarget;
+                } else {
+                    $targetPath = $linkTarget;
+                    if (! File::exists($targetPath)) {
+                        File::makeDirectory($targetPath, 0755, true);
+                    }
+                }
+
+                Log::info('Restoring to symlink target', [
+                    'source' => $item,
+                    'symlink_target' => $targetPath,
+                ]);
+            }
+
+            // 既存ディレクトリの内容をバックアップして復元
+            if (File::exists($targetPath) && File::isDirectory($targetPath)) {
+                // 既存ファイルを削除せずにマージ（上書き）
+                File::copyDirectory($item, $targetPath);
+
+                Log::info('Restored directory (merged)', [
+                    'source' => $item,
+                    'target' => $targetPath,
+                ]);
+            } else {
+                // ディレクトリがない場合は作成してコピー
+                File::makeDirectory($targetPath, 0755, true);
+                File::copyDirectory($item, $targetPath);
+
+                Log::info('Restored directory (created)', [
+                    'source' => $item,
+                    'target' => $targetPath,
+                ]);
+            }
+        }
+
+        Log::info('Uploads directory restored successfully', [
+            'source' => $sourceDir,
+            'target' => $targetDir,
+        ]);
     }
 
     /**
