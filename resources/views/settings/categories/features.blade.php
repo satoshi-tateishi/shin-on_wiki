@@ -427,12 +427,15 @@
                 const restoreData = await restoreResponse.json();
 
                 if (restoreData.success) {
-                    // URLが更新された場合はキャッシュ再生成ボタンを表示
+                    // URLが更新された場合は自動でキャッシュ再生成を実行
                     const urlsUpdated = restoreData.url_update && restoreData.url_update.updates && Object.keys(restoreData.url_update.updates).length > 0;
 
                     if (urlsUpdated) {
-                        showCacheRegenerateButton();
-                        showAlert('success', '✅ データベースの復元が完了しました！CSSを反映するには「キャッシュ再生成」ボタンを押してください。');
+                        showAlert('success', '✅ データベースの復元が完了しました。キャッシュを再生成中...');
+                        // 少しディレイを入れて自動でキャッシュ再生成
+                        setTimeout(() => {
+                            autoRegenerateCache();
+                        }, 1000);
                     } else {
                         showAlert('success', '✅ データベースの復元が完了しました！');
                         setTimeout(() => {
@@ -463,12 +466,42 @@
             setTimeout(() => alertDiv.remove(), 10000);
         }
 
-        // Show cache regenerate button
+        // Auto regenerate cache after restore
+        async function autoRegenerateCache() {
+            try {
+                const response = await fetch('/api/backup/regenerate-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('success', '✅ キャッシュの再生成が完了しました。ページをリロードします...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // 失敗した場合は手動ボタンを表示
+                    showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
+                    showCacheRegenerateButton();
+                }
+            } catch (error) {
+                // エラーの場合も手動ボタンを表示
+                showAlert('warning', '⚠️ キャッシュの自動再生成に失敗しました。手動で再生成してください。');
+                showCacheRegenerateButton();
+            }
+        }
+
+        // Show cache regenerate button (fallback for manual operation)
         function showCacheRegenerateButton() {
             // Remove existing button if any
-            const existingBtn = document.getElementById('cache-regenerate-btn');
-            if (existingBtn) {
-                existingBtn.remove();
+            const existingContainer = document.getElementById('cache-regenerate-container');
+            if (existingContainer) {
+                existingContainer.remove();
             }
 
             // Create button container
@@ -490,11 +523,11 @@
             backupList.parentElement.insertAdjacentElement('afterend', container);
 
             // Add click handler
-            document.getElementById('cache-regenerate-btn').addEventListener('click', regenerateCache);
+            document.getElementById('cache-regenerate-btn').addEventListener('click', manualRegenerateCache);
         }
 
-        // Regenerate cache
-        async function regenerateCache() {
+        // Manual regenerate cache (when auto fails)
+        async function manualRegenerateCache() {
             const btn = document.getElementById('cache-regenerate-btn');
             const status = document.getElementById('cache-regenerate-status');
 
@@ -517,20 +550,14 @@
                     status.textContent = '✅ ' + data.message;
                     status.style.color = 'green';
 
-                    // Remove the container after success
-                    setTimeout(() => {
-                        const container = document.getElementById('cache-regenerate-container');
-                        if (container) {
-                            container.style.backgroundColor = '#d4edda';
-                            container.style.border = '2px solid #28a745';
-                        }
-                    }, 500);
+                    const container = document.getElementById('cache-regenerate-container');
+                    if (container) {
+                        container.style.backgroundColor = '#d4edda';
+                        container.style.border = '2px solid #28a745';
+                    }
 
-                    // Prompt reload
                     setTimeout(() => {
-                        if (confirm('キャッシュの再生成が完了しました。ページをリロードしますか？')) {
-                            window.location.reload();
-                        }
+                        window.location.reload();
                     }, 1500);
                 } else {
                     status.textContent = '❌ ' + data.error;
