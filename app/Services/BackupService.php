@@ -1344,18 +1344,27 @@ class BackupService
     }
 
     /**
-     * アプリケーションキャッシュをクリア
+     * アプリケーションキャッシュをクリアして再生成
      */
     private function clearApplicationCache(): void
     {
         try {
+            // キャッシュをクリア
             \Artisan::call('cache:clear');
             \Artisan::call('config:clear');
+            \Artisan::call('route:clear');
             \Artisan::call('view:clear');
 
             Log::info('Application cache cleared after URL update');
+
+            // キャッシュを再生成（本番環境のパフォーマンス維持）
+            \Artisan::call('config:cache');
+            \Artisan::call('route:cache');
+            \Artisan::call('view:cache');
+
+            Log::info('Application cache regenerated after URL update');
         } catch (Exception $e) {
-            Log::warning('Failed to clear cache', [
+            Log::warning('Failed to clear/regenerate cache', [
                 'error' => $e->getMessage(),
             ]);
         }
