@@ -168,8 +168,8 @@ class LineWorksBotService
      */
     public function sendOtpMessage(string $userId, string $otp): bool
     {
-        $message = "shin·on Wiki ログイン認証コード:\n";
-        $message .= $otp . "\n\n";
+        $message = $otp . "\n\n";
+        $message .= "shin·on Wiki ログイン認証コード\n";
         $message .= '有効期限:10分';
 
         return $this->sendMessage($userId, $message);
