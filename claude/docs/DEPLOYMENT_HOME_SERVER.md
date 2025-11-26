@@ -150,7 +150,70 @@ sudo certbot --apache -d shin-on-wiki.mydns.jp
 
 ---
 
-## 6. バックアップと復元
+## 6. LINE WORKS OTP 二段階認証設定
+
+LINE WORKS OIDC ログイン後にOTP（ワンタイムパスワード）検証を行う二段階認証機能。
+
+### 6.1 LINE WORKS Developer Console での設定
+
+1. [LINE WORKS Developer Console](https://developers.worksmobile.com/) にアクセス
+2. **Bot** を作成し、Bot ID を取得
+3. **Service Account** を作成し、秘密鍵をダウンロード
+4. **Developer Console App** を作成し、Client ID/Secret を取得
+
+### 6.2 .env に Bot API 設定を追加
+
+```bash
+nano .env
+```
+
+以下を追加：
+
+```env
+# LINE WORKS Bot API Settings (Two-Factor Authentication)
+LINEWORKS_API_BASE_URL=https://www.worksapis.com/v1.0
+LINEWORKS_AUTH_URL=https://auth.worksmobile.com/oauth2/v2.0/token
+LINEWORKS_BOT_ID=your_bot_id
+LINEWORKS_BOT_SECRET=your_bot_secret
+LINEWORKS_DB_CLIENT_ID=your_developer_console_client_id
+LINEWORKS_DB_CLIENT_SECRET=your_developer_console_client_secret
+LINEWORKS_SERVICE_ACCOUNT=xxxxx.serviceaccount@your-domain
+LINEWORKS_PRIVATE_KEY_PATH=lineworks/private_key.pem
+```
+
+### 6.3 秘密鍵の配置
+
+```bash
+# ディレクトリ作成
+sudo mkdir -p storage/app/lineworks
+
+# 秘密鍵ファイルを作成（Developer Consoleからダウンロードした内容を貼り付け）
+sudo nano storage/app/lineworks/private_key.pem
+
+# パーミッション設定
+sudo chown www-data:www-data storage/app/lineworks
+sudo chown www-data:www-data storage/app/lineworks/private_key.pem
+sudo chmod 600 storage/app/lineworks/private_key.pem
+```
+
+### 6.4 キャッシュ再生成
+
+```bash
+docker compose -f docker-compose.production.yml exec app php artisan config:cache
+```
+
+### 6.5 動作確認
+
+1. LINE WORKS でログイン
+2. OTP入力画面が表示される
+3. LINE WORKS にOTPメッセージが届く
+4. OTPを入力してログイン完了
+
+詳細は [LINEWORKS_OTP_2FA.md](./LINEWORKS_OTP_2FA.md) を参照。
+
+---
+
+## 7. バックアップと復元
 
 ### 重要：復元後のキャッシュ再生成
 
@@ -200,7 +263,7 @@ chmod 644 .env
 
 ---
 
-## 7. トラブルシューティング
+## 8. トラブルシューティング
 
 ### DB接続エラー（復元後）
 
@@ -243,7 +306,7 @@ exec("{$phpBinary} {$artisanPath} config:cache");
 
 ---
 
-## 8. 運用コマンド
+## 9. 運用コマンド
 
 ```bash
 # ログ確認
@@ -268,4 +331,5 @@ docker compose -f docker-compose.production.yml restart app
 
 - [BACKUP_RESTORE.md](./BACKUP_RESTORE.md) - バックアップ/リストア詳細
 - [LINEWORKS_SSO_SETUP.md](./LINEWORKS_SSO_SETUP.md) - LINE WORKS SSO設定
+- [LINEWORKS_OTP_2FA.md](./LINEWORKS_OTP_2FA.md) - LINE WORKS OTP二段階認証
 - [scripts/README.md](../../scripts/README.md) - 自動化スクリプト
