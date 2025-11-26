@@ -13,7 +13,7 @@ BookStackをベースにLINE WORKS SSO認証を統合した社内Wikiシステ�
 | **ベースシステム** | [BookStack](https://www.bookstackapp.com/) v25.11 |
 | **認証方式** | LINE WORKS SSO + OTP二段階認証 |
 | **アクセス制限** | @shin-on1981ドメインのユーザーのみ |
-| **本番URL** | https://wiki.shin-on.mydns.jp |
+| **本番URL** | https://wiki.shin-on1981.com |
 
 ---
 
@@ -31,7 +31,7 @@ BookStackをベースにLINE WORKS SSO認証を統合した社内Wikiシステ�
 │                                             │
 │  Apache (SSL終端 / リバースプロキシ)          │
 │    ・Let's Encrypt SSL証明書                 │
-│    ・wiki.shin-on.mydns.jp → localhost:8083 │
+│    ・wiki.shin-on1981.com → localhost:8083  │
 │                    │                         │
 │                    ▼                         │
 │  Docker                                      │
