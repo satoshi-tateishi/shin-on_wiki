@@ -1,157 +1,87 @@
-# shin·on Wiki by BookStack - LINE WORKS SSO 統合 ドキュメント
+# shin·on Wiki by BookStack - ドキュメント
 
-このディレクトリには、shin·on Wiki by BookStack (BookStackベース) へのLINE WORKS SSO認証統合に関するドキュメントが含まれています。
-
-## 📚 ドキュメント一覧
-
-### 1. [README_LINEWORKS.md](./README_LINEWORKS.md) - クイックスタートガイド 🚀
-**最初に読むべきドキュメント**
-
-- セットアップ手順
-- 環境変数の設定
-- 主な機能の概要
-- よくある問題と解決策
-
-**対象読者**: 初めて環境をセットアップする開発者、運用担当者
+LINE WORKS SSO統合を含むBookStackカスタマイズのドキュメントです。
 
 ---
 
-### 2. [LINEWORKS_SSO_SETUP.md](./LINEWORKS_SSO_SETUP.md) - 詳細実装ドキュメント 📖
-**技術的な詳細を知りたい場合に読むドキュメント**
+## ドキュメント一覧
 
-- 実装した機能の詳細説明
-- 修正したファイルとコードの解説
-- LINE WORKS認証フローの詳細
-- セキュリティ上の考慮事項
-- トラブルシューティングガイド
-- 動作確認手順
+### LINE WORKS 認証
 
-**対象読者**: 実装の詳細を理解したい開発者、コードレビュー担当者
+| ドキュメント | 説明 |
+|-------------|------|
+| [README_LINEWORKS.md](./README_LINEWORKS.md) | LINE WORKS認証のクイックスタート（SSO + OTP） |
+| [LINEWORKS_SSO_SETUP.md](./LINEWORKS_SSO_SETUP.md) | SSO実装の詳細（OAuth 2.0/OpenID Connect） |
+| [LINEWORKS_OTP_2FA.md](./LINEWORKS_OTP_2FA.md) | OTP二段階認証の詳細（Bot API） |
 
----
+### デプロイ
 
-### 3. [CHANGES.md](./CHANGES.md) - 変更内容サマリー 📝
-**何が変更されたかを知りたい場合に読むドキュメント**
+| ドキュメント | 説明 |
+|-------------|------|
+| [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) | デプロイ時のチェックリスト |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Ubuntu直接デプロイの詳細手順 |
+| [DEPLOYMENT_DOCKER.md](./DEPLOYMENT_DOCKER.md) | Dockerデプロイの詳細手順 |
+| [DEPLOYMENT_HOME_SERVER.md](./DEPLOYMENT_HOME_SERVER.md) | 自宅サーバー（MyDNS + GitHub Actions） |
+| [SYSTEM_REQUIREMENTS.md](./SYSTEM_REQUIREMENTS.md) | システム要件 |
 
-- 各ファイルの変更箇所（変更前/変更後の比較）
-- 技術的な課題と解決策
-- テスト結果とログ例
-- セキュリティレビュー
+### バックアップ・運用
 
-**対象読者**: コードレビュー担当者、プロジェクトマネージャー、監査担当者
-
----
-
-### 4. [BACKUP_RESTORE.md](./BACKUP_RESTORE.md) - バックアップ・復元ガイド 💾
-**バックアップと復元の方法を知りたい場合に読むドキュメント**
-
-- Dropboxバックアップの作成方法
-- バックアップからの復元手順
-- 復元後の自動サムネイル再生成機能
-- トラブルシューティング
-
-**対象読者**: システム運用担当者、バックアップ担当者
+| ドキュメント | 説明 |
+|-------------|------|
+| [BACKUP_RESTORE.md](./BACKUP_RESTORE.md) | Dropboxバックアップ・復元ガイド |
+| [CHANGES.md](./CHANGES.md) | 変更履歴 |
 
 ---
 
-## 📖 読む順番（推奨）
+## 読む順番（推奨）
 
 ### 初めてセットアップする場合
-1. **README_LINEWORKS.md** - まずはクイックスタートガイドを読んで環境をセットアップ
-2. **LINEWORKS_SSO_SETUP.md** - セットアップ後、詳細な動作を理解する
-3. **CHANGES.md** - 必要に応じて、具体的な変更内容を確認
 
-### コードレビューの場合
-1. **CHANGES.md** - 変更内容のサマリーを確認
-2. **LINEWORKS_SSO_SETUP.md** - 実装の詳細を確認
-3. **README_LINEWORKS.md** - セットアップ手順を確認
+1. [README_LINEWORKS.md](./README_LINEWORKS.md) - 認証機能の概要
+2. [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - デプロイ手順
+3. [BACKUP_RESTORE.md](./BACKUP_RESTORE.md) - バックアップ設定
 
-### トラブルシューティングの場合
-1. **README_LINEWORKS.md** - よくある問題を確認
-2. **LINEWORKS_SSO_SETUP.md** - 詳細なトラブルシューティングガイドを確認
-3. ログを確認: `grep "OIDC" storage/logs/laravel.log | tail -20`
+### 詳細を確認したい場合
 
-### バックアップ・復元の場合
-1. **BACKUP_RESTORE.md** - バックアップ・復元の手順を確認
-2. トラブルシューティングセクションを確認
-3. 必要に応じて手動でサムネイルを再生成: `php artisan bookstack:regenerate-thumbnails`
+- SSO実装の詳細 → [LINEWORKS_SSO_SETUP.md](./LINEWORKS_SSO_SETUP.md)
+- OTP二段階認証の詳細 → [LINEWORKS_OTP_2FA.md](./LINEWORKS_OTP_2FA.md)
+- デプロイ詳細 → [DEPLOYMENT.md](./DEPLOYMENT.md) / [DEPLOYMENT_DOCKER.md](./DEPLOYMENT_DOCKER.md)
+
+### トラブルシューティング
+
+1. 各ドキュメントのトラブルシューティングセクションを確認
+2. ログを確認: `grep "OIDC\|OTP" storage/logs/laravel.log | tail -20`
 
 ---
 
-## 🎯 ドキュメントの目的
+## 主な実装内容
 
-このドキュメント群は、以下の目的で作成されています：
+### LINE WORKS認証
 
-1. **知識の共有**: 実装の背景と技術的な判断を記録
-2. **再現性の確保**: 他の環境でも同じセットアップができるように
-3. **メンテナンス性の向上**: 将来の変更や修正を容易にする
-4. **セキュリティの透明性**: セキュリティ上の考慮事項を明確にする
+- LINE WORKS OAuth 2.0/OpenID Connect 認証
+- PKCE (Proof Key for Code Exchange) サポート
+- ドメインベースのアクセス制御（@shin-on1981のみ）
+- OTP二段階認証（LINE WORKS Bot経由）
 
----
+### バックアップ機能
 
-## 🔍 主な実装内容
-
-### LINE WORKS SSO統合
-- ✅ LINE WORKS OAuth 2.0/OpenID Connect 認証
-- ✅ PKCE (Proof Key for Code Exchange) サポート
-- ✅ JWT署名検証スキップ（LINE WORKS非対応のため）
-- ✅ ドメインベースのアクセス制御（@shin-on1981のみ）
-- ✅ セキュリティ補完（State/Nonce、HTTPS、ドメイン制限）
-
-### Dropboxバックアップ・復元機能
-- ✅ 自動Dropboxバックアップ（データベース + ファイル）
-- ✅ Dropboxからの復元
-- ✅ 復元後の自動サムネイル再生成（2025-11-16追加）
-- ✅ 手動サムネイル再生成コマンド
+- Dropbox自動バックアップ（データベース + ファイル）
+- 復元後の自動サムネイル再生成
+- 手動再生成コマンド
 
 ---
 
-## 📞 サポート
-
-質問や問題がある場合は、以下を確認してください：
-
-1. **ログの確認**
-   ```bash
-   grep "OIDC" storage/logs/laravel.log | tail -20
-   ```
-
-2. **環境変数の確認**
-   ```bash
-   php artisan config:show
-   ```
-
-3. **ドキュメントの確認**
-   - [README_LINEWORKS.md](./README_LINEWORKS.md) のトラブルシューティングセクション
-   - [LINEWORKS_SSO_SETUP.md](./LINEWORKS_SSO_SETUP.md) のトラブルシューティングセクション
-
----
-
-## 📅 最終更新日
-
-2025年11月16日
-
----
-
-## 🔗 関連リンク
+## 関連リンク
 
 ### プロジェクト
-- **[GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)** - このプロジェクトのソースコード
-- [プロジェクトルートREADME](../../README.md) - プロジェクト全体の概要
+
+- [GitHubリポジトリ](https://github.com/satoshi-tateishi/shin-on_wiki)
 
 ### 技術資料
+
 - [BookStack公式サイト](https://www.bookstackapp.com/)
 - [LINE WORKS API ドキュメント](https://developers.worksmobile.com/jp/docs/auth)
-- [OAuth 2.0 RFC 6749](https://datatracker.ietf.org/doc/html/rfc6749)
-- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 
 ---
 
-## 👥 作成者
-
-Claude Code + satoshi
-
----
-
-## 📄 ライセンス
-
-このドキュメントは BookStack のライセンスに従います。
+**最終更新**: 2025年11月26日
