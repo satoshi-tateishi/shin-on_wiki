@@ -209,8 +209,8 @@ https://www.dropbox.com/developers/apps
 - [x] Let's Encrypt SSL証明書取得
 - [x] HTTPS接続テスト成功
 - [x] BookStack APP_URL変更
-- [ ] LINEWORKS リダイレクトURL更新
-- [ ] Dropbox リダイレクトURL更新
+- [x] LINEWORKS リダイレクトURL更新
+- [x] Dropbox リダイレクトURL更新
 - [ ] HTTPからHTTPSへの自動リダイレクト確認（オプション）
 
 ---
