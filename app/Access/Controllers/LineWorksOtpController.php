@@ -227,10 +227,10 @@ class LineWorksOtpController extends Controller
                 'lineworks_otp_attempts' => 0,
             ]);
 
-            // LINE WORKS IDを取得（external_auth_idから）
-            $lineWorksId = $user->external_auth_id;
+            // LINE WORKS IDを取得（emailから - LINE WORKSではemail形式がユーザーID）
+            $lineWorksId = $user->email;
             if (empty($lineWorksId)) {
-                Log::error('LINE WORKS ID not found for user', ['user_id' => $user->id]);
+                Log::error('LINE WORKS ID (email) not found for user', ['user_id' => $user->id]);
                 return false;
             }
 
