@@ -47,20 +47,20 @@ jobs:
             npm prune --omit=dev
 
             # Dockerコンテナを再起動（PHPコードの変更を反映）
-            docker compose restart app
+            docker compose -f docker-compose.production.yml restart app
 
             # データベースマイグレーション
-            docker compose exec -T app php artisan migrate --force
+            docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
 
             # キャッシュクリア
-            docker compose exec -T app php artisan config:clear
-            docker compose exec -T app php artisan cache:clear
-            docker compose exec -T app php artisan route:clear
-            docker compose exec -T app php artisan view:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan config:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan cache:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan route:clear
+            docker compose -f docker-compose.production.yml exec -T app php artisan view:clear
 
             # キャッシュ最適化
-            docker compose exec -T app php artisan config:cache
-            docker compose exec -T app php artisan route:cache
-            docker compose exec -T app php artisan view:cache
+            docker compose -f docker-compose.production.yml exec -T app php artisan config:cache
+            docker compose -f docker-compose.production.yml exec -T app php artisan route:cache
+            docker compose -f docker-compose.production.yml exec -T app php artisan view:cache
 
             echo "Deployment completed successfully!"
