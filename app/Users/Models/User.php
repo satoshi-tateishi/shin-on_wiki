@@ -65,9 +65,20 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
      *
      * @var list<string>
      */
-    protected $fillable = ['name', 'email'];
+    protected $fillable = [
+        'name',
+        'email',
+        'lineworks_otp_code',
+        'lineworks_otp_expires_at',
+        'lineworks_otp_locked_until',
+        'lineworks_otp_attempts',
+    ];
 
-    protected $casts = ['last_activity_at' => 'datetime'];
+    protected $casts = [
+        'last_activity_at' => 'datetime',
+        'lineworks_otp_expires_at' => 'datetime',
+        'lineworks_otp_locked_until' => 'datetime',
+    ];
 
     /**
      * The attributes excluded from the model's JSON form.
