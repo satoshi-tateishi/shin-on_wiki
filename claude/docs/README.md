@@ -22,6 +22,7 @@ LINE WORKS SSO統合を含むBookStackカスタマイズのドキュメントで
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Ubuntu直接デプロイの詳細手順 |
 | [DEPLOYMENT_DOCKER.md](./DEPLOYMENT_DOCKER.md) | Dockerデプロイの詳細手順 |
 | [DEPLOYMENT_HOME_SERVER.md](./DEPLOYMENT_HOME_SERVER.md) | 自宅サーバー（MyDNS + GitHub Actions） |
+| [CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md) | 独自ドメイン設定（さくら + MyDNS） |
 | [SYSTEM_REQUIREMENTS.md](./SYSTEM_REQUIREMENTS.md) | システム要件 |
 
 ### バックアップ・運用

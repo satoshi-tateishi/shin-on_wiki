@@ -183,9 +183,9 @@
 # 実運用例: shin-on.mydns.jp サブドメイン構成
 # --------------------------------------------------------------
 #
-# MyDNS で取得したドメインにサブドメインを設定:
-#   - wiki.shin-on.mydns.jp → shin-on_wiki (ポート 8083)
-#   - db.shin-on.mydns.jp   → shin-on (ポート 8081)
+# ドメイン構成:
+#   - wiki.shin-on1981.com → shin-on_wiki (ポート 8083)
+#   - db.shin-on.mydns.jp  → shin-on (ポート 8081)
 #
 # MyDNS側設定:
 #   1. https://www.mydns.jp/ にログイン
@@ -193,7 +193,7 @@
 #   3. HOSTNAME に「wiki」「db」を追加（Aレコード、IPは自動）
 #
 # 各アプリケーションの.envで設定:
-#   shin-on_wiki: COMPOSE_PROJECT_NAME=shin-on_wiki, APP_PORT=8083, APP_URL=https://wiki.shin-on.mydns.jp
+#   shin-on_wiki: COMPOSE_PROJECT_NAME=shin-on_wiki, APP_PORT=8083, APP_URL=https://wiki.shin-on1981.com
 #   shin-on:      COMPOSE_PROJECT_NAME=shin-on, APP_PORT=8081, APP_URL=https://db.shin-on.mydns.jp
 #
 # --------------------------------------------------------------

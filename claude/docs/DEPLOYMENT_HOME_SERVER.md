@@ -72,10 +72,12 @@ curl -4 -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
 複数のアプリケーションを同一サーバーでホストする場合、サブドメインを使用。
 
 **構成例**:
-| サブドメイン | アプリ | ポート |
+| ドメイン | アプリ | ポート |
 |-------------|--------|--------|
-| `wiki.shin-on.mydns.jp` | shin-on_wiki | 8083 |
+| `wiki.shin-on1981.com` | shin-on_wiki | 8083 |
 | `db.shin-on.mydns.jp` | shin-on | 8081 |
+
+> **Note**: shin-on_wikiは独自ドメイン（wiki.shin-on1981.com）に移行済み。詳細は[CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md)参照。
 
 **MyDNS管理画面での設定**:
 
@@ -94,7 +96,7 @@ curl -4 -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
 
 **DNS伝播確認**:
 ```bash
-dig wiki.shin-on.mydns.jp
+dig wiki.shin-on1981.com
 dig db.shin-on.mydns.jp
 ```
 
@@ -122,7 +124,7 @@ chmod 600 ~/.ssh/authorized_keys
 
 | Secret名 | 値 |
 |---------|---|
-| `DEPLOY_HOST` | wiki.shin-on.mydns.jp |
+| `DEPLOY_HOST` | wiki.shin-on1981.com |
 | `DEPLOY_USER` | ユーザー名 |
 | `DEPLOY_KEY` | `~/.ssh/id_ed25519_deploy` の内容 |
 | `DEPLOY_PATH` | /var/www/shin-on_wiki |
@@ -178,7 +180,7 @@ sudo a2ensite shin-on_wiki.conf
 sudo systemctl reload apache2
 
 # SSL証明書取得
-sudo certbot --apache -d wiki.shin-on.mydns.jp
+sudo certbot --apache -d wiki.shin-on1981.com
 ```
 
 ### サブドメイン構成の場合（複数アプリ）
@@ -188,18 +190,18 @@ sudo certbot --apache -d wiki.shin-on.mydns.jp
 **ファイル**: `/etc/apache2/sites-available/shin-on-apps.conf`
 
 ```apache
-# wiki.shin-on.mydns.jp → shin-on_wiki (8083)
+# wiki.shin-on1981.com → shin-on_wiki (8083)
 <VirtualHost *:80>
-    ServerName wiki.shin-on.mydns.jp
-    Redirect permanent / https://wiki.shin-on.mydns.jp/
+    ServerName wiki.shin-on1981.com
+    Redirect permanent / https://wiki.shin-on1981.com/
 </VirtualHost>
 
 <VirtualHost *:443>
-    ServerName wiki.shin-on.mydns.jp
+    ServerName wiki.shin-on1981.com
 
     SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/wiki.shin-on.mydns.jp/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/wiki.shin-on.mydns.jp/privkey.pem
+    SSLCertificateFile /etc/letsencrypt/live/wiki.shin-on1981.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/wiki.shin-on1981.com/privkey.pem
 
     ProxyPreserveHost On
     ProxyPass / http://localhost:8083/
@@ -266,18 +268,18 @@ sudo systemctl reload apache2
 
 ```bash
 # DNS伝播後に実行
-sudo certbot --apache -d wiki.shin-on.mydns.jp
+sudo certbot --apache -d wiki.shin-on1981.com
 sudo certbot --apache -d db.shin-on.mydns.jp
 
 # または、まとめて取得
-sudo certbot --apache -d wiki.shin-on.mydns.jp -d db.shin-on.mydns.jp
+sudo certbot --apache -d wiki.shin-on1981.com -d db.shin-on.mydns.jp
 ```
 
 **各アプリの.env変更**:
 
 ```bash
 # shin-on_wiki
-APP_URL=https://wiki.shin-on.mydns.jp
+APP_URL=https://wiki.shin-on1981.com
 
 # shin-on
 APP_URL=https://db.shin-on.mydns.jp
@@ -285,10 +287,10 @@ APP_URL=https://db.shin-on.mydns.jp
 
 **OAuth Redirect URI更新**:
 
-LINE WORKS / Dropbox などのOAuth設定でRedirect URIを新しいサブドメインに更新。
+LINE WORKS / Dropbox などのOAuth設定でRedirect URIを新しいドメインに更新。
 
-- LINE WORKS: `https://wiki.shin-on.mydns.jp/oidc/callback`
-- Dropbox: `https://wiki.shin-on.mydns.jp/auth/dropbox/callback`
+- LINE WORKS: `https://wiki.shin-on1981.com/lineworks/callback`
+- Dropbox: `https://wiki.shin-on1981.com/auth/dropbox/callback`
 
 ---
 
