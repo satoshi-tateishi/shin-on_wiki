@@ -20,13 +20,13 @@ class LineWorksBotService
 
     public function __construct()
     {
-        $this->clientId = env('LINEWORKS_DB_CLIENT_ID', '');
-        $this->clientSecret = env('LINEWORKS_DB_CLIENT_SECRET', '');
-        $this->serviceAccount = env('LINEWORKS_SERVICE_ACCOUNT', '');
-        $this->privateKeyPath = storage_path('app/' . env('LINEWORKS_PRIVATE_KEY_PATH', 'lineworks/private_key.pem'));
-        $this->apiBaseUrl = env('LINEWORKS_API_BASE_URL', 'https://www.worksapis.com/v1.0');
-        $this->authUrl = env('LINEWORKS_AUTH_URL', 'https://auth.worksmobile.com/oauth2/v2.0/token');
-        $this->botId = env('LINEWORKS_BOT_ID', '');
+        $this->clientId = config('services.lineworks.client_id', '');
+        $this->clientSecret = config('services.lineworks.client_secret', '');
+        $this->serviceAccount = config('services.lineworks.service_account', '');
+        $this->privateKeyPath = storage_path('app/' . config('services.lineworks.private_key_path', 'lineworks/private_key.pem'));
+        $this->apiBaseUrl = config('services.lineworks.api_base_url', 'https://www.worksapis.com/v1.0');
+        $this->authUrl = config('services.lineworks.auth_url', 'https://auth.worksmobile.com/oauth2/v2.0/token');
+        $this->botId = config('services.lineworks.bot_id', '');
     }
 
     /**
