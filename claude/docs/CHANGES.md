@@ -4,6 +4,31 @@ shin·on Wiki by BookStack の変更履歴です。
 
 ---
 
+## 2025年11月27日
+
+### URL統一（独自ドメイン一本化）
+
+アクセスURLを `wiki.shin-on1981.com` のみに統一しました。
+
+**変更内容:**
+- 古いApache設定ファイルを無効化
+  - `shin-on-apps.conf` (wiki.shin-on.mydns.jp:80)
+  - `shin-on-apps-le-ssl.conf` (wiki.shin-on.mydns.jp:443)
+- `shin-on_wiki-le-ssl.conf` の `ServerName` を `wiki.shin-on1981.com` に変更
+- `ServerAlias shin-on.mydns.jp` を削除
+- HTTP→HTTPSリダイレクト用の新設定ファイルを作成（`wiki-shin-on1981-redirect.conf`）
+
+**最終構成:**
+| URL | 動作 |
+|-----|------|
+| `https://wiki.shin-on1981.com` | アクセス可能 |
+| `http://wiki.shin-on1981.com` | HTTPSにリダイレクト |
+| 古いドメイン | 無効化 |
+
+**詳細:** [CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md)
+
+---
+
 ## 2025年11月26日
 
 ### サブドメイン構成への移行
@@ -132,4 +157,4 @@ BookStackにLINE WORKS OAuth 2.0/OpenID Connect認証を統合しました。
 
 ---
 
-**最終更新**: 2025年11月26日
+**最終更新**: 2025年11月27日

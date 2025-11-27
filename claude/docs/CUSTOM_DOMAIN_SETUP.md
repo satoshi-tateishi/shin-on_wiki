@@ -10,6 +10,7 @@ wiki.shin-on1981.com でBookStackにアクセスするための設定手順
 | DNS反映確認 | ✅ 完了 |
 | Apache設定 | ✅ 完了 |
 | SSL証明書取得 | ✅ 完了 |
+| URL統一 | ✅ 完了（2025年11月27日） |
 
 ## 構成図
 
@@ -19,199 +20,159 @@ wiki.shin-on1981.com
 shin-on.mydns.jp
         ↓ MyDNS.jp (DDNS)
 147.192.23.179 (自宅サーバー)
+        ↓ Apache (リバースプロキシ)
+Docker (localhost:8083)
         ↓
 BookStack
 ```
 
 ---
 
-## 残作業
+## 現在のApache設定
 
-### Step 1: DNS反映確認
+### 有効な設定ファイル
 
-設定したCNAMEレコードが正しく反映されているか確認します。
+| ファイル | 用途 |
+|----------|------|
+| `/etc/apache2/sites-enabled/shin-on_wiki-le-ssl.conf` | HTTPS (ポート443) |
+| `/etc/apache2/sites-enabled/wiki-shin-on1981-redirect.conf` | HTTP→HTTPSリダイレクト (ポート80) |
 
-```bash
-# macOSのDNSキャッシュをクリア
-sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+### HTTPSサイト設定
 
-# DNS確認
-nslookup wiki.shin-on1981.com
-nslookup shin-on.mydns.jp
+`/etc/apache2/sites-enabled/shin-on_wiki-le-ssl.conf`:
+
+```apache
+<IfModule mod_ssl.c>
+    <VirtualHost *:443>
+        ServerName wiki.shin-on1981.com
+        ServerAdmin admin@shin-on.mydns.jp
+
+        # リバースプロキシ設定
+        ProxyPreserveHost On
+        ProxyPass / http://localhost:8083/
+        ProxyPassReverse / http://localhost:8083/
+
+        # セキュリティヘッダー
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Header unset X-Powered-By
+        Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+        # プロキシヘッダーの転送
+        RequestHeader set X-Forwarded-Proto "https"
+        RequestHeader set X-Forwarded-Port "443"
+
+        # ログファイル
+        ErrorLog ${APACHE_LOG_DIR}/shin-on_wiki-error.log
+        CustomLog ${APACHE_LOG_DIR}/shin-on_wiki-access.log combined
+        LogLevel warn
+
+        # SSL証明書設定
+        Include /etc/letsencrypt/options-ssl-apache.conf
+        SSLCertificateFile /etc/letsencrypt/live/wiki.shin-on1981.com/fullchain.pem
+        SSLCertificateKeyFile /etc/letsencrypt/live/wiki.shin-on1981.com/privkey.pem
+    </VirtualHost>
+</IfModule>
 ```
 
-**成功条件**: 両方が同じIPアドレスを返すこと
+### HTTPリダイレクト設定
 
-もし異なるIPが返る場合は、数時間待ってから再確認してください。
-
----
-
-### Step 2: 自宅サーバーのApache設定
-
-自宅サーバーにSSHで接続して作業します。
-
-#### 2-1. 現在のApache設定ファイルを探す
-
-```bash
-# Ubuntu/Debian
-sudo find /etc/apache2 -name "*.conf" | xargs grep -l "shin-on.mydns.jp"
-
-# CentOS/RHEL
-sudo find /etc/httpd -name "*.conf" | xargs grep -l "shin-on.mydns.jp"
-```
-
-#### 2-2. ServerAliasを追加
-
-見つけた設定ファイルを編集し、`ServerAlias` を追加します：
+`/etc/apache2/sites-enabled/wiki-shin-on1981-redirect.conf`:
 
 ```apache
 <VirtualHost *:80>
-    ServerName shin-on.mydns.jp
-    ServerAlias wiki.shin-on1981.com    # ← この行を追加
-    DocumentRoot /var/www/bookstack/public
-    # ... 既存設定 ...
-</VirtualHost>
+    ServerName wiki.shin-on1981.com
 
-# HTTPS用のVirtualHostがある場合はそちらにも追加
-<VirtualHost *:443>
-    ServerName shin-on.mydns.jp
-    ServerAlias wiki.shin-on1981.com    # ← この行を追加
-    # ... 既存設定 ...
+    RewriteEngine on
+    RewriteCond %{SERVER_NAME} =wiki.shin-on1981.com
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 </VirtualHost>
 ```
-
-#### 2-3. 設定を反映
-
-```bash
-# 設定テスト
-sudo apachectl configtest
-
-# Apache再起動
-sudo systemctl restart apache2
-# または
-sudo systemctl restart httpd
-```
-
-#### 2-4. HTTP接続テスト
-
-ブラウザで http://wiki.shin-on1981.com にアクセスして動作確認
 
 ---
 
-### Step 3: Let's EncryptでSSL証明書取得
+## 設定変更履歴
 
-#### 3-1. Certbotインストール（未インストールの場合）
+### 2025年11月27日: URL統一
+
+古いドメインを無効化し、`wiki.shin-on1981.com` のみでアクセス可能に変更。
+
+**無効化した設定ファイル:**
+- `shin-on-apps.conf` (wiki.shin-on.mydns.jp:80)
+- `shin-on-apps-le-ssl.conf` (wiki.shin-on.mydns.jp:443)
+
+**変更内容:**
+1. `shin-on_wiki-le-ssl.conf` の `ServerName` を `wiki.shin-on1981.com` に変更
+2. `ServerAlias shin-on.mydns.jp` を削除
+3. HTTP→HTTPSリダイレクト用の新設定ファイルを作成
+
+### 2025年11月26日: 初期設定
+
+独自ドメイン `wiki.shin-on1981.com` を追加（`shin-on.mydns.jp` のエイリアスとして）。
+
+---
+
+## メンテナンス
+
+### 設定確認
 
 ```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install certbot python3-certbot-apache
+# VirtualHost一覧
+apachectl -S
 
-# CentOS/RHEL
-sudo dnf install certbot python3-certbot-apache
+# 設定テスト
+sudo apachectl configtest
 ```
 
-#### 3-2. SSL証明書の取得
+### SSL証明書
 
 ```bash
-# 新しいドメイン用の証明書を取得
-sudo certbot --apache -d wiki.shin-on1981.com
-```
+# 証明書情報
+sudo certbot certificates
 
-または、既存の shin-on.mydns.jp の証明書に追加する場合：
-
-```bash
-sudo certbot --apache -d shin-on.mydns.jp -d wiki.shin-on1981.com
-```
-
-#### 3-3. 自動更新の確認
-
-```bash
+# 自動更新テスト
 sudo certbot renew --dry-run
 ```
 
-#### 3-4. HTTPS接続テスト
-
-ブラウザで https://wiki.shin-on1981.com にアクセスして動作確認
-
----
-
-### Step 4: BookStackのAPP_URL変更
-
-独自ドメインをメインにするため、APP_URLを変更します：
+### アクセステスト
 
 ```bash
-# 自宅サーバーで編集
-sudo nano /var/www/shin-on_wiki/.env
+# HTTPS接続確認
+curl -I https://wiki.shin-on1981.com
+
+# HTTPリダイレクト確認
+curl -I http://wiki.shin-on1981.com
 ```
-
-```env
-APP_URL=https://wiki.shin-on1981.com
-```
-
-変更後：
-
-```bash
-cd /var/www/shin-on_wiki
-sudo php artisan config:clear
-sudo php artisan cache:clear
-```
-
----
-
-### Step 5: 外部サービスのリダイレクトURL更新
-
-APP_URLを変更した場合、OAuthを使用する外部サービスのリダイレクトURLも更新が必要です。
-
-#### 5-1. LINEWORKS SSO
-
-**LINEWORKS Developer Console** で変更：
-https://developers.worksmobile.com/
-
-- アプリ設定 → OAuth → Redirect URL
-- 新URL: `https://wiki.shin-on1981.com/lineworks/callback`
-
-#### 5-2. Dropbox バックアップ
-
-**Dropbox App Console** で変更：
-https://www.dropbox.com/developers/apps
-
-- アプリ選択 → Settings → OAuth 2 → Redirect URIs
-- 新URL: `https://wiki.shin-on1981.com/auth/dropbox/callback`
 
 ---
 
 ## トラブルシューティング
 
-### DNS設定が反映されない
+### 502 Bad Gateway
 
-- DNSの反映には最大48時間かかる場合があります
-- 異なるネットワーク（モバイル回線等）から確認してみてください
+Dockerコンテナが起動しているか確認:
+```bash
+docker ps | grep shin-on_wiki
+docker compose -f docker-compose.production.yml up -d
+```
 
-### 証明書取得時にエラー
+### SSL証明書エラー
 
-- ポート80が外部からアクセス可能か確認（ルーターのポート転送設定）
-- ファイアウォールでポート80/443が開放されているか確認
+証明書を更新:
+```bash
+sudo certbot renew
+sudo systemctl reload apache2
+```
 
-### 「このサイトにアクセスできません」エラー
+### 設定変更が反映されない
 
-- DNS反映を再確認
-- 自宅サーバーのApacheが起動しているか確認
-- ルーターのポート転送設定を確認
-
----
-
-## 完了チェックリスト
-
-- [x] DNS反映確認（両ドメインが同じIPを返す）
-- [x] Apache ServerAlias設定追加
-- [x] HTTP接続テスト成功
-- [x] Let's Encrypt SSL証明書取得
-- [x] HTTPS接続テスト成功
-- [x] BookStack APP_URL変更
-- [x] LINEWORKS リダイレクトURL更新
-- [x] Dropbox リダイレクトURL更新
-- [ ] HTTPからHTTPSへの自動リダイレクト確認（オプション）
+```bash
+sudo apachectl configtest
+sudo systemctl reload apache2
+```
 
 ---
 
@@ -220,7 +181,8 @@ https://www.dropbox.com/developers/apps
 - **MyDNS.jp ホスト名**: shin-on.mydns.jp
 - **独自ドメイン**: wiki.shin-on1981.com
 - **さくらDNS設定**: CNAME wiki → shin-on.mydns.jp.
+- **本番URL**: https://wiki.shin-on1981.com
 
-## 作成日
+## 更新日
 
 2025年11月27日

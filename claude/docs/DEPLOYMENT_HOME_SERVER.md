@@ -71,33 +71,16 @@ curl -4 -u "${MYDNS_ID}:${MYDNS_PASSWORD}" https://www.mydns.jp/login.html
 
 複数のアプリケーションを同一サーバーでホストする場合、サブドメインを使用。
 
-**構成例**:
-| ドメイン | アプリ | ポート |
-|-------------|--------|--------|
-| `wiki.shin-on1981.com` | shin-on_wiki | 8083 |
-| `db.shin-on.mydns.jp` | shin-on | 8081 |
+**構成**:
+| ドメイン | アプリ | ポート | 備考 |
+|-------------|--------|--------|------|
+| `wiki.shin-on1981.com` | shin-on_wiki | 8083 | 独自ドメイン（メイン） |
 
-> **Note**: shin-on_wikiは独自ドメイン（wiki.shin-on1981.com）に移行済み。詳細は[CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md)参照。
-
-**MyDNS管理画面での設定**:
-
-1. [MyDNS.JP](https://www.mydns.jp/) にログイン
-2. 「DOMAIN INFO」から対象ドメインを選択
-3. 「HOSTNAME」セクションでサブドメインを追加:
-
-| Type | Hostname | Content |
-|------|----------|---------|
-| A | wiki | (空欄：親ドメインと同じIP) |
-| A | db | (空欄：親ドメインと同じIP) |
-
-**注意**:
-- サブドメインは親ドメインのIPを継承するため、IP更新スクリプトの変更は不要
-- DNS伝播に数分〜数時間かかる場合がある
+> **Note**: shin-on_wikiは `wiki.shin-on1981.com` のみでアクセス可能。詳細は[CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md)参照。
 
 **DNS伝播確認**:
 ```bash
 dig wiki.shin-on1981.com
-dig db.shin-on.mydns.jp
 ```
 
 ### ルーター ポートフォワーディング
@@ -183,84 +166,69 @@ sudo systemctl reload apache2
 sudo certbot --apache -d wiki.shin-on1981.com
 ```
 
-### サブドメイン構成の場合（複数アプリ）
+### 現在のApache設定（wiki.shin-on1981.com専用）
 
-複数アプリを同一サーバーでホストする場合のVirtualHost設定。
+shin-on_wiki は独自ドメイン `wiki.shin-on1981.com` のみでアクセス可能です。
 
-**ファイル**: `/etc/apache2/sites-available/shin-on-apps.conf`
+**有効な設定ファイル**:
+- `/etc/apache2/sites-enabled/shin-on_wiki-le-ssl.conf` - HTTPS (ポート443)
+- `/etc/apache2/sites-enabled/wiki-shin-on1981-redirect.conf` - HTTP→HTTPSリダイレクト
+
+**HTTPSサイト設定** (`shin-on_wiki-le-ssl.conf`):
 
 ```apache
-# wiki.shin-on1981.com → shin-on_wiki (8083)
+<IfModule mod_ssl.c>
+    <VirtualHost *:443>
+        ServerName wiki.shin-on1981.com
+
+        SSLEngine on
+        SSLCertificateFile /etc/letsencrypt/live/wiki.shin-on1981.com/fullchain.pem
+        SSLCertificateKeyFile /etc/letsencrypt/live/wiki.shin-on1981.com/privkey.pem
+        Include /etc/letsencrypt/options-ssl-apache.conf
+
+        ProxyPreserveHost On
+        ProxyPass / http://localhost:8083/
+        ProxyPassReverse / http://localhost:8083/
+
+        RequestHeader set X-Forwarded-Proto "https"
+        RequestHeader set X-Forwarded-Port "443"
+
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Header unset X-Powered-By
+        Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+        ErrorLog ${APACHE_LOG_DIR}/shin-on_wiki-error.log
+        CustomLog ${APACHE_LOG_DIR}/shin-on_wiki-access.log combined
+    </VirtualHost>
+</IfModule>
+```
+
+**HTTPリダイレクト設定** (`wiki-shin-on1981-redirect.conf`):
+
+```apache
 <VirtualHost *:80>
     ServerName wiki.shin-on1981.com
-    Redirect permanent / https://wiki.shin-on1981.com/
-</VirtualHost>
 
-<VirtualHost *:443>
-    ServerName wiki.shin-on1981.com
-
-    SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/wiki.shin-on1981.com/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/wiki.shin-on1981.com/privkey.pem
-
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:8083/
-    ProxyPassReverse / http://localhost:8083/
-
-    RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "443"
-
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-Content-Type-Options "nosniff"
-
-    ErrorLog ${APACHE_LOG_DIR}/wiki-error.log
-    CustomLog ${APACHE_LOG_DIR}/wiki-access.log combined
-</VirtualHost>
-
-# db.shin-on.mydns.jp → shin-on (8081)
-<VirtualHost *:80>
-    ServerName db.shin-on.mydns.jp
-    Redirect permanent / https://db.shin-on.mydns.jp/
-</VirtualHost>
-
-<VirtualHost *:443>
-    ServerName db.shin-on.mydns.jp
-
-    SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/db.shin-on.mydns.jp/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/db.shin-on.mydns.jp/privkey.pem
-
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:8081/
-    ProxyPassReverse / http://localhost:8081/
-
-    RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "443"
-
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-Content-Type-Options "nosniff"
-
-    ErrorLog ${APACHE_LOG_DIR}/db-error.log
-    CustomLog ${APACHE_LOG_DIR}/db-access.log combined
+    RewriteEngine on
+    RewriteCond %{SERVER_NAME} =wiki.shin-on1981.com
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 </VirtualHost>
 ```
 
-**設定手順**:
+**設定確認**:
 
 ```bash
-# 1. 旧設定を無効化（既存設定がある場合）
-sudo a2dissite shin-on_wiki.conf
+# VirtualHost一覧
+apachectl -S
 
-# 2. 新設定ファイル作成
-sudo nano /etc/apache2/sites-available/shin-on-apps.conf
+# 設定テスト
+sudo apachectl configtest
 
-# 3. 設定を有効化
-sudo a2ensite shin-on-apps.conf
-
-# 4. 設定テスト
-sudo apache2ctl configtest
-
-# 5. Apache再読み込み
+# Apache再読み込み
 sudo systemctl reload apache2
 ```
 
@@ -269,28 +237,22 @@ sudo systemctl reload apache2
 ```bash
 # DNS伝播後に実行
 sudo certbot --apache -d wiki.shin-on1981.com
-sudo certbot --apache -d db.shin-on.mydns.jp
-
-# または、まとめて取得
-sudo certbot --apache -d wiki.shin-on1981.com -d db.shin-on.mydns.jp
 ```
 
-**各アプリの.env変更**:
+**.env設定**:
 
 ```bash
-# shin-on_wiki
 APP_URL=https://wiki.shin-on1981.com
-
-# shin-on
-APP_URL=https://db.shin-on.mydns.jp
 ```
 
-**OAuth Redirect URI更新**:
+**OAuth Redirect URI**:
 
-LINE WORKS / Dropbox などのOAuth設定でRedirect URIを新しいドメインに更新。
+LINE WORKS / Dropbox などのOAuth設定でRedirect URIを設定。
 
 - LINE WORKS: `https://wiki.shin-on1981.com/lineworks/callback`
 - Dropbox: `https://wiki.shin-on1981.com/auth/dropbox/callback`
+
+詳細は [CUSTOM_DOMAIN_SETUP.md](./CUSTOM_DOMAIN_SETUP.md) を参照
 
 ---
 
