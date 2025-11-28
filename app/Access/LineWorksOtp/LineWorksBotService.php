@@ -142,6 +142,14 @@ class LineWorksBotService
             ],
         ]);
 
+        Log::debug('LINE WORKS Bot API Response', [
+            'user_id' => $userId,
+            'bot_id' => $this->botId,
+            'url' => $url,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
         if (!$response->successful()) {
             Log::error('LINE WORKS Bot message send failed', [
                 'user_id' => $userId,
@@ -153,6 +161,7 @@ class LineWorksBotService
 
         Log::info('LINE WORKS Bot message sent successfully', [
             'user_id' => $userId,
+            'response' => $response->json(),
         ]);
 
         return true;

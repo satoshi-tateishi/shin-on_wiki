@@ -227,12 +227,19 @@ class LineWorksOtpController extends Controller
                 'lineworks_otp_attempts' => 0,
             ]);
 
-            // LINE WORKS IDを取得（emailから - LINE WORKSではemail形式がユーザーID）
+            // LINE WORKS IDを取得（メールアドレス形式 = LINE WORKSのアカウントID）
             $lineWorksId = $user->email;
             if (empty($lineWorksId)) {
-                Log::error('LINE WORKS ID (email) not found for user', ['user_id' => $user->id]);
+                Log::error('LINE WORKS ID (email) not found for user', [
+                    'user_id' => $user->id,
+                ]);
                 return false;
             }
+
+            Log::debug('LINE WORKS OTP sending', [
+                'user_id' => $user->id,
+                'lineWorksId' => $lineWorksId,
+            ]);
 
             // LINE WORKS Bot経由で送信
             $this->botService->sendOtpMessage($lineWorksId, $otp);
