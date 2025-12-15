@@ -177,7 +177,10 @@ class LineWorksBotService
      */
     public function sendOtpMessage(string $userId, string $otp): bool
     {
-        $message = $otp . "\n\n";
+        // OTPを3桁ずつスペース区切りにフォーマット（例: 123456 → 123 456）
+        $formattedOtp = substr($otp, 0, 3) . ' ' . substr($otp, 3, 3);
+
+        $message = $formattedOtp . "\n\n";
         $message .= "ログイン認証コード\n";
         $message .= '有効期限:10分';
 
