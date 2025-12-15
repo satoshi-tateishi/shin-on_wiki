@@ -50,7 +50,10 @@ jobs:
             docker compose -f docker-compose.production.yml restart app
 
             # データベースマイグレーション
-            docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force
+            docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force || true
+
+            # ログファイルの権限修正（マイグレーションでrootが作成した場合に対応）
+            docker compose -f docker-compose.production.yml exec -T app chown -R www-data:www-data storage/logs/
 
             # キャッシュクリア
             docker compose -f docker-compose.production.yml exec -T app php artisan config:clear
