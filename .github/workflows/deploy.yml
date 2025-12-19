@@ -121,10 +121,12 @@ jobs:
 
       - name: Setup environment file
         run: |
-          cat > .env << 'EOF'
+          php artisan key:generate --show > /tmp/app_key.txt
+          APP_KEY=$(cat /tmp/app_key.txt)
+          cat > .env << EOF
           APP_ENV=testing
           APP_DEBUG=true
-          APP_KEY=base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz
+          APP_KEY=${APP_KEY}
           APP_URL=http://localhost
           DB_CONNECTION=mysql_testing
           DB_HOST=127.0.0.1
@@ -139,9 +141,11 @@ jobs:
           QUEUE_CONNECTION=sync
           MAIL_DRIVER=array
           EOF
+          # Remove leading spaces from each line
+          sed -i 's/^[[:space:]]*//' .env
 
-      - name: Run database migrations
-        run: php artisan migrate --database=mysql_testing --force
+      - name: Run database migrations and seed
+        run: php artisan migrate:fresh --database=mysql_testing --seed --force
 
       - name: Run PHPUnit tests
         run: php vendor/bin/phpunit --testsuite="Application Test Suite"
