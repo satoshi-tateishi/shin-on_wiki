@@ -5,6 +5,13 @@
          displayDetailsOnTestsThatTriggerDeprecations="true"
          colors="true">
   <testsuites>
+    <!-- CI用: 認証依存の少ないテストのみ実行 -->
+    <testsuite name="CI Test Suite">
+      <directory>./tests/Unit/</directory>
+      <directory>./tests/Commands/</directory>
+      <directory>./tests/Util/</directory>
+    </testsuite>
+    <!-- フルテスト用 -->
     <testsuite name="Application Test Suite">
       <directory>./tests/</directory>
       <exclude>./tests/Auth/</exclude>

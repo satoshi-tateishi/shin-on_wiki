@@ -148,7 +148,7 @@ jobs:
         run: php artisan migrate:fresh --database=mysql_testing --seed --force
 
       - name: Run PHPUnit tests
-        run: php vendor/bin/phpunit --testsuite="Application Test Suite"
+        run: php vendor/bin/phpunit --testsuite="CI Test Suite"
 
   test-js:
     name: JavaScript Tests (jest)
