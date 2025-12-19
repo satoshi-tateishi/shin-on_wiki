@@ -121,20 +121,30 @@ jobs:
 
       - name: Setup environment file
         run: |
-          cp .env.example.complete .env
-          sed -i 's/APP_KEY=SomeRandomString/APP_KEY=base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz/' .env
+          cat > .env << 'EOF'
+          APP_ENV=testing
+          APP_DEBUG=true
+          APP_KEY=base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz
+          APP_URL=http://localhost
+          DB_CONNECTION=mysql_testing
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=bookstack-test
+          DB_USERNAME=bookstack-test
+          DB_PASSWORD=bookstack-test
+          MYSQL_USER=bookstack-test
+          MYSQL_PASSWORD=bookstack-test
+          CACHE_DRIVER=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          MAIL_DRIVER=array
+          EOF
 
       - name: Run database migrations
         run: php artisan migrate --database=mysql_testing --force
-        env:
-          MYSQL_USER: bookstack-test
-          MYSQL_PASSWORD: bookstack-test
 
       - name: Run PHPUnit tests
         run: php vendor/bin/phpunit --testsuite="Application Test Suite"
-        env:
-          MYSQL_USER: bookstack-test
-          MYSQL_PASSWORD: bookstack-test
 
   test-js:
     name: JavaScript Tests (jest)
