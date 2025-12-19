@@ -134,12 +134,13 @@ jobs:
             GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519_deploy -o StrictHostKeyChecking=no' git fetch origin
             git reset --hard origin/release
 
-            # storage と bootstrap/cache の所有者をwww-data(33)に戻す
-            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
-
             # 依存関係の更新（ホスト側で実行）
+            # 注: composer install前はユーザー権限のままにしておく
             composer install --no-dev --optimize-autoloader
             npm ci
+
+            # storage と bootstrap/cache の所有者をwww-data(33)に変更
+            sudo chown -R 33:33 ${{ secrets.DEPLOY_PATH }}/storage ${{ secrets.DEPLOY_PATH }}/bootstrap/cache
 
             # アセットのビルド（ホスト側で実行）
             npm run production
