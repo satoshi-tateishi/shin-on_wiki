@@ -119,10 +119,10 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --ansi
 
-      - name: Generate application key
-        run: php artisan key:generate --force
-        env:
-          APP_KEY: base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz
+      - name: Setup environment file
+        run: |
+          cp .env.example.complete .env
+          sed -i 's/APP_KEY=SomeRandomString/APP_KEY=base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz/' .env
 
       - name: Run database migrations
         run: php artisan migrate --database=mysql_testing --force

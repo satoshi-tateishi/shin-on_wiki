@@ -5,7 +5,8 @@
 
 import type {Config} from 'jest';
 import {pathsToModuleNameMapper} from "ts-jest";
-import tsconfig from './tsconfig.json' with { type: 'json' };
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const tsconfig = require('./tsconfig.json');
 const { compilerOptions } = tsconfig;
 
 const config: Config = {
