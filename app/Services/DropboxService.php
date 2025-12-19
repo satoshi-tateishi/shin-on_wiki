@@ -109,7 +109,7 @@ class DropboxService
 
         // ファイルサイズ制限チェック（150MB）
         if (strlen($fileContent) >= config('backup.dropbox.max_file_size', 150 * 1024 * 1024)) {
-            throw new Exception('File too large: '.number_format($fileSizeMB, 2).'MB');
+            throw new Exception('File too large: ' . number_format($fileSizeMB, 2) . 'MB');
         }
 
         try {
@@ -118,7 +118,7 @@ class DropboxService
 
             // Dropbox API v2を使用してアップロード
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->getValidAccessToken(),
+                'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
                 'Content-Type' => 'application/octet-stream',
                 'Dropbox-API-Arg' => json_encode([
                     'path' => $remotePath,
@@ -129,7 +129,7 @@ class DropboxService
                 ->post('https://content.dropboxapi.com/2/files/upload');
 
             if (! $response->successful()) {
-                throw new Exception('Upload failed: '.$response->body());
+                throw new Exception('Upload failed: ' . $response->body());
             }
 
             Log::info('Backup uploaded successfully', [
@@ -138,7 +138,6 @@ class DropboxService
             ]);
 
             return true;
-
         } catch (Exception $e) {
             // アクセストークンエラーの場合はリフレッシュを試行
             if (strpos($e->getMessage(), 'invalid_access_token') !== false) {
@@ -160,16 +159,15 @@ class DropboxService
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->getValidAccessToken(),
+                'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
                 'Dropbox-API-Arg' => json_encode(['path' => $remotePath]),
             ])->post('https://content.dropboxapi.com/2/files/download', null);
 
             if (! $response->successful()) {
-                throw new Exception('Download failed: '.$response->body());
+                throw new Exception('Download failed: ' . $response->body());
             }
 
             return $response->body();
-
         } catch (Exception $e) {
             // アクセストークンエラーの場合はリフレッシュを試行
             if (strpos($e->getMessage(), 'invalid_access_token') !== false) {
@@ -191,7 +189,7 @@ class DropboxService
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->getValidAccessToken(),
+                'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
                 'Content-Type' => 'application/json',
             ])->post('https://api.dropboxapi.com/2/files/list_folder', [
                 'path' => $path === '/' ? '' : $path,
@@ -201,11 +199,10 @@ class DropboxService
             ]);
 
             if (! $response->successful()) {
-                throw new Exception('List folder failed: '.$response->body());
+                throw new Exception('List folder failed: ' . $response->body());
             }
 
             return $response->json();
-
         } catch (Exception $e) {
             // アクセストークンエラーの場合はリフレッシュを試行
             if (strpos($e->getMessage(), 'invalid_access_token') !== false) {
@@ -319,7 +316,7 @@ class DropboxService
         ]);
 
         if (! $response->successful()) {
-            throw new Exception('Token refresh failed: '.$response->body());
+            throw new Exception('Token refresh failed: ' . $response->body());
         }
 
         $data = $response->json();
@@ -348,10 +345,10 @@ class DropboxService
                 continue;
             }
 
-            $currentPath .= '/'.$part;
+            $currentPath .= '/' . $part;
             try {
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer '.$this->getValidAccessToken(),
+                    'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
                     'Content-Type' => 'application/json',
                 ])->post('https://api.dropboxapi.com/2/files/create_folder_v2', [
                     'path' => $currentPath,
@@ -378,11 +375,11 @@ class DropboxService
     {
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.$this->getValidAccessToken(),
+                'Authorization' => 'Bearer ' . $this->getValidAccessToken(),
             ])->post('https://api.dropboxapi.com/2/users/get_current_account', null);
 
             if (! $response->successful()) {
-                throw new Exception('Failed to get account info: '.$response->body());
+                throw new Exception('Failed to get account info: ' . $response->body());
             }
 
             $accountInfo = $response->json();
@@ -396,7 +393,6 @@ class DropboxService
             }
 
             return $accountInfo;
-
         } catch (Exception $e) {
             // アクセストークンが無効な場合、リフレッシュを試行
             if (strpos($e->getMessage(), 'invalid_access_token') !== false) {
@@ -438,7 +434,6 @@ class DropboxService
             Log::info('Dropbox folder deleted', ['path' => $path]);
 
             return true;
-
         } catch (Exception $e) {
             Log::error('Failed to delete Dropbox folder', [
                 'path' => $path,

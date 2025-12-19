@@ -75,15 +75,9 @@ class OidcService
         $provider->setPkceCode($pkceCode);
 
         // Try to exchange authorization code for access token
-        // Add LINE WORKS domain parameter if set
-        $tokenOptions = ['code' => $authorizationCode];
-        $domain = env('LINEWORKS_DOMAIN');
-        if ($domain) {
-            $tokenOptions['domain'] = $domain;
-            \Log::info('OIDC: Adding domain to token request options', ['domain' => $domain]);
-        }
-
-        $accessToken = $provider->getAccessToken('authorization_code', $tokenOptions);
+        $accessToken = $provider->getAccessToken('authorization_code', [
+            'code' => $authorizationCode,
+        ]);
 
         return $this->processAccessTokenCallback($accessToken, $settings);
     }
@@ -149,7 +143,7 @@ class OidcService
         }
 
         // Set LINE WORKS domain for SSO functionality
-        $domain = env('LINEWORKS_DOMAIN');
+        $domain = config('oidc.lineworks_domain');
         if ($domain) {
             $provider->setDomain($domain);
             \Log::info('OIDC: Setting LINE WORKS domain', ['domain' => $domain]);
@@ -343,7 +337,12 @@ class OidcService
      */
     protected function validateUserDomain(string $email): void
     {
-        $allowedDomain = env('LINEWORKS_DOMAIN', 'shin-on1981');
+        $allowedDomain = config('oidc.lineworks_domain');
+
+        // Skip validation if no domain restriction is configured
+        if (empty($allowedDomain)) {
+            return;
+        }
 
         // Extract domain from email (part after @)
         $emailDomain = substr(strrchr($email, '@'), 1);

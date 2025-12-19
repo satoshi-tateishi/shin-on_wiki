@@ -7,6 +7,10 @@
   <testsuites>
     <testsuite name="Application Test Suite">
       <directory>./tests/</directory>
+      <exclude>./tests/Auth/</exclude>
+    </testsuite>
+    <testsuite name="Auth">
+      <directory>./tests/Auth/</directory>
     </testsuite>
   </testsuites>
   <php>

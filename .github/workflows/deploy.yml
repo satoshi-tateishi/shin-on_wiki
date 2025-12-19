@@ -1,15 +1,169 @@
-name: Deploy to Home Server
+name: Test and Deploy to Home Server
 
 on:
   push:
     branches:
-      - release  # releaseブランチへのpushでトリガー
+      - release
 
 jobs:
+  # ===== テストジョブ（並列実行） =====
+
+  lint-php:
+    name: PHP Lint (phpcs)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: phpcs
+
+      - name: Run PHP code style check
+        run: composer lint
+
+  lint-js:
+    name: JavaScript Lint (eslint)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Run JavaScript lint
+        run: npm run lint
+
+  phpstan:
+    name: PHP Static Analysis (phpstan)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, mbstring, json, curl, xml, mysql, ldap
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-8.3
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --ansi
+
+      - name: Run PHP static analysis
+        run: composer check-static
+
+  test-php:
+    name: PHP Unit Tests (phpunit)
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: bookstack-test
+          MYSQL_USER: bookstack-test
+          MYSQL_PASSWORD: bookstack-test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, mbstring, json, curl, xml, mysql, ldap
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-8.3
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --ansi
+
+      - name: Generate application key
+        run: php artisan key:generate --force
+        env:
+          APP_KEY: base64:dGVzdGluZ2tleXRoYXRpc2V4YWN0bHkzMmJ5dGVz
+
+      - name: Run database migrations
+        run: php artisan migrate --database=mysql_testing --force
+        env:
+          MYSQL_USER: bookstack-test
+          MYSQL_PASSWORD: bookstack-test
+
+      - name: Run PHPUnit tests
+        run: php vendor/bin/phpunit --testsuite="Application Test Suite"
+        env:
+          MYSQL_USER: bookstack-test
+          MYSQL_PASSWORD: bookstack-test
+
+  test-js:
+    name: JavaScript Tests (jest)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        run: npm run ts:lint
+
+      - name: Run JavaScript tests
+        run: npm test
+
+  # ===== デプロイジョブ =====
+
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    # 特定のリポジトリでのみ実行
+    needs: [lint-php, lint-js, phpstan, test-php, test-js]
     if: github.repository == 'satoshi-tateishi/shin-on_wiki'
 
     steps:

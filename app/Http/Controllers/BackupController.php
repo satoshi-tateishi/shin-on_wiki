@@ -61,7 +61,6 @@ class BackupController extends Controller
                     'results' => $result['results'] ?? [],
                 ], 500);
             }
-
         } catch (Exception $e) {
             Log::error('Backup failed from settings panel', [
                 'user_id' => auth()->id(),
@@ -71,7 +70,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'バックアップ処理中にエラーが発生しました: '.$e->getMessage(),
+                'error' => 'バックアップ処理中にエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -91,7 +90,6 @@ class BackupController extends Controller
             $result = $this->backupService->listBackups();
 
             return response()->json($result);
-
         } catch (Exception $e) {
             Log::error('Failed to list backups from settings panel', [
                 'user_id' => auth()->id(),
@@ -100,7 +98,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'バックアップ一覧の取得に失敗しました: '.$e->getMessage(),
+                'error' => 'バックアップ一覧の取得に失敗しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -126,7 +124,6 @@ class BackupController extends Controller
                 'token_info' => $tokenInfo,
                 'message' => '接続テストが成功しました',
             ]);
-
         } catch (Exception $e) {
             Log::error('Connection test failed from settings panel', [
                 'user_id' => auth()->id(),
@@ -135,7 +132,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '接続テストに失敗しました: '.$e->getMessage(),
+                'error' => '接続テストに失敗しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -168,7 +165,6 @@ class BackupController extends Controller
                     'error' => 'トークンの更新に失敗しました',
                 ], 500);
             }
-
         } catch (Exception $e) {
             Log::error('Token refresh failed from settings panel', [
                 'user_id' => auth()->id(),
@@ -177,7 +173,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'トークン更新中にエラーが発生しました: '.$e->getMessage(),
+                'error' => 'トークン更新中にエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -197,7 +193,6 @@ class BackupController extends Controller
             $result = $this->backupService->getRestorableBackups();
 
             return response()->json($result);
-
         } catch (Exception $e) {
             Log::error('Failed to get restorable backups from settings panel', [
                 'user_id' => auth()->id(),
@@ -206,7 +201,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '復元可能なバックアップの取得に失敗しました: '.$e->getMessage(),
+                'error' => '復元可能なバックアップの取得に失敗しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -248,7 +243,6 @@ class BackupController extends Controller
                     'error' => $result['error'],
                 ], 500);
             }
-
         } catch (Exception $e) {
             Log::error('Backup download failed from settings panel', [
                 'user_id' => auth()->id(),
@@ -257,7 +251,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'バックアップのダウンロードに失敗しました: '.$e->getMessage(),
+                'error' => 'バックアップのダウンロードに失敗しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -294,7 +288,7 @@ class BackupController extends Controller
             if (! $downloadResult['success']) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'バックアップのダウンロードに失敗しました: '.$downloadResult['error'],
+                    'error' => 'バックアップのダウンロードに失敗しました: ' . $downloadResult['error'],
                 ], 500);
             }
 
@@ -350,7 +344,6 @@ class BackupController extends Controller
                 'files_restore' => $filesRestoreResult,
                 'url_update' => $urlUpdateResult,
             ]);
-
         } catch (Exception $e) {
             Log::error('Database restore failed from settings panel', [
                 'user_id' => auth()->id(),
@@ -359,7 +352,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'データベースの復元に失敗しました: '.$e->getMessage(),
+                'error' => 'データベースの復元に失敗しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -412,7 +405,6 @@ class BackupController extends Controller
                 'backup' => $targetBackup,
                 'warning' => '復元を実行すると、現在のデータベースが上書きされます。復元前に自動バックアップを作成することをお勧めします。',
             ]);
-
         } catch (Exception $e) {
             Log::error('Restore validation failed', [
                 'user_id' => auth()->id(),
@@ -421,7 +413,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => '検証中にエラーが発生しました: '.$e->getMessage(),
+                'error' => '検証中にエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -449,7 +441,6 @@ class BackupController extends Controller
             $result = $this->backupService->cleanupOldBackups($dryRun);
 
             return response()->json($result);
-
         } catch (Exception $e) {
             Log::error('Backup cleanup failed', [
                 'user_id' => auth()->id(),
@@ -458,7 +449,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'クリーンアップ中にエラーが発生しました: '.$e->getMessage(),
+                'error' => 'クリーンアップ中にエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -542,7 +533,6 @@ class BackupController extends Controller
                     ],
                 ], 500);
             }
-
         } catch (Exception $e) {
             Log::error('Cache regeneration failed', [
                 'user_id' => auth()->id(),
@@ -551,7 +541,7 @@ class BackupController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'キャッシュ再生成中にエラーが発生しました: '.$e->getMessage(),
+                'error' => 'キャッシュ再生成中にエラーが発生しました: ' . $e->getMessage(),
             ], 500);
         }
     }

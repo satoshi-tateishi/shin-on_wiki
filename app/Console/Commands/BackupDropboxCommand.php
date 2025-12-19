@@ -63,7 +63,6 @@ class BackupDropboxCommand extends Command
 
                 return Command::FAILURE;
             }
-
         } catch (Exception $e) {
             $this->error("❌ Backup process failed: {$e->getMessage()}");
 
@@ -108,10 +107,10 @@ class BackupDropboxCommand extends Command
             }
 
             $status = $result['success'] ? '✅' : '❌';
-            $this->info("  {$status} ".ucfirst($type).' backup');
+            $this->info("  {$status} " . ucfirst($type) . ' backup');
 
             if (isset($result['path'])) {
-                $this->info('    📂 Local: '.basename($result['path']));
+                $this->info('    📂 Local: ' . basename($result['path']));
             }
 
             if (isset($result['size'])) {

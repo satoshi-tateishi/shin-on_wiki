@@ -34,7 +34,7 @@ class DropboxAuthController extends Controller
             'scope' => config('backup.dropbox.scope'),
         ];
 
-        $authUrl = 'https://www.dropbox.com/oauth2/authorize?'.http_build_query($params);
+        $authUrl = 'https://www.dropbox.com/oauth2/authorize?' . http_build_query($params);
 
         return redirect($authUrl);
     }
@@ -52,7 +52,7 @@ class DropboxAuthController extends Controller
 
             // エラーチェック
             if ($request->error) {
-                throw new Exception('Authorization failed: '.$request->error_description);
+                throw new Exception('Authorization failed: ' . $request->error_description);
             }
 
             // Authorization Code取得
@@ -89,7 +89,6 @@ class DropboxAuthController extends Controller
 
             return redirect('/settings/features')
                 ->with('success', 'Dropbox認証が完了しました。');
-
         } catch (Exception $e) {
             Log::error('Dropbox OAuth callback failed', [
                 'error' => $e->getMessage(),
@@ -97,7 +96,7 @@ class DropboxAuthController extends Controller
             ]);
 
             return redirect('/settings/features')
-                ->with('error', 'Dropbox認証に失敗しました: '.$e->getMessage());
+                ->with('error', 'Dropbox認証に失敗しました: ' . $e->getMessage());
         }
     }
 
@@ -129,7 +128,6 @@ class DropboxAuthController extends Controller
                 'has_refresh_token' => $token->hasValidRefreshToken(),
                 'last_refreshed_at' => $token->last_refreshed_at?->toISOString(),
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to get Dropbox auth status', [
                 'error' => $e->getMessage(),
@@ -175,7 +173,6 @@ class DropboxAuthController extends Controller
                 'message' => 'Token refreshed successfully',
                 'expires_at' => $token->fresh()->access_token_expires_at?->toISOString(),
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to refresh Dropbox token', [
                 'error' => $e->getMessage(),
@@ -183,7 +180,7 @@ class DropboxAuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to refresh token: '.$e->getMessage(),
+                'error' => 'Failed to refresh token: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -209,7 +206,6 @@ class DropboxAuthController extends Controller
                 'success' => true,
                 'message' => 'Dropbox authentication revoked',
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to revoke Dropbox auth', [
                 'error' => $e->getMessage(),
@@ -234,7 +230,7 @@ class DropboxAuthController extends Controller
         ]);
 
         if (! $response->successful()) {
-            throw new Exception('Token exchange failed: '.$response->body());
+            throw new Exception('Token exchange failed: ' . $response->body());
         }
 
         return $response->json();
@@ -251,7 +247,7 @@ class DropboxAuthController extends Controller
         ]);
 
         if (! $response->successful()) {
-            throw new Exception('Token refresh failed: '.$response->body());
+            throw new Exception('Token refresh failed: ' . $response->body());
         }
 
         $data = $response->json();

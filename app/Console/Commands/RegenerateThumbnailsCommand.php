@@ -43,7 +43,6 @@ class RegenerateThumbnailsCommand extends Command
 
                 return Command::FAILURE;
             }
-
         } catch (Exception $e) {
             $this->error("❌ Thumbnail regeneration failed: {$e->getMessage()}");
 

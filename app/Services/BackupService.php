@@ -73,7 +73,6 @@ class BackupService
                 'timestamp' => $timestamp,
                 'results' => $results,
             ];
-
         } catch (Exception $e) {
             Log::error('Backup process failed', [
                 'timestamp' => $timestamp,
@@ -139,7 +138,6 @@ class BackupService
                     'error' => 'Upload/download content mismatch',
                 ];
             }
-
         } catch (Exception $e) {
             Log::error('Dropbox connection test failed', [
                 'error' => $e->getMessage(),
@@ -168,7 +166,6 @@ class BackupService
                 'success' => true,
                 'backups' => $backups,
             ];
-
         } catch (Exception $e) {
             Log::error('Failed to list backups', [
                 'error' => $e->getMessage(),
@@ -215,7 +212,7 @@ class BackupService
             $result = Process::run($command);
 
             if (! $result->successful()) {
-                throw new Exception('Database backup failed: '.$result->errorOutput());
+                throw new Exception('Database backup failed: ' . $result->errorOutput());
             }
         } else {
             // SQLiteや他のデータベースの場合はLaravelのクエリを使用
@@ -237,12 +234,12 @@ class BackupService
     private function createDatabaseBackupFallback(string $backupPath): void
     {
         $sql = "-- BookStack Database Backup\n";
-        $sql .= '-- Generated on: '.Carbon::now()."\n\n";
+        $sql .= '-- Generated on: ' . Carbon::now() . "\n\n";
 
         // 全テーブルのデータをダンプ
         $tables = DB::select('SHOW TABLES');
         $database = config('database.connections.mysql.database');
-        $tableKey = 'Tables_in_'.$database;
+        $tableKey = 'Tables_in_' . $database;
 
         foreach ($tables as $table) {
             $tableName = $table->$tableKey;
@@ -250,16 +247,16 @@ class BackupService
 
             // テーブル構造取得
             $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`")[0];
-            $sql .= $createTable->{'Create Table'}.";\n\n";
+            $sql .= $createTable->{'Create Table'} . ";\n\n";
 
             // データ取得
             $rows = DB::table($tableName)->get();
             foreach ($rows as $row) {
                 $values = array_map(function ($value) {
-                    return $value === null ? 'NULL' : "'".addslashes($value)."'";
+                    return $value === null ? 'NULL' : "'" . addslashes($value) . "'";
                 }, (array) $row);
 
-                $sql .= "INSERT INTO `{$tableName}` VALUES (".implode(', ', $values).");\n";
+                $sql .= "INSERT INTO `{$tableName}` VALUES (" . implode(', ', $values) . ");\n";
             }
             $sql .= "\n";
         }
@@ -272,7 +269,7 @@ class BackupService
         $filename = str_replace('{timestamp}', $timestamp, config('backup.files.filename_format', 'files_backup_{timestamp}.zip'));
         $backupPath = storage_path("app/backups/{$filename}");
 
-        $zip = new ZipArchive;
+        $zip = new ZipArchive();
         if ($zip->open($backupPath, ZipArchive::CREATE) !== true) {
             throw new Exception("Cannot create zip file: {$backupPath}");
         }
@@ -324,7 +321,7 @@ class BackupService
 
         foreach ($files as $file) {
             $filePath = $file->getRealPath();
-            $relativePath = $localPath.'/'.$file->getRelativePathname();
+            $relativePath = $localPath . '/' . $file->getRelativePathname();
 
             // 除外パスチェック
             $shouldExclude = false;
@@ -366,7 +363,6 @@ class BackupService
                             'local_path' => $result['path'],
                         ]);
                     }
-
                 } catch (Exception $e) {
                     $result['dropbox_uploaded'] = false;
                     $result['dropbox_error'] = $e->getMessage();
@@ -425,7 +421,6 @@ class BackupService
                 'success' => true,
                 'backups' => $restorableBackups,
             ];
-
         } catch (Exception $e) {
             Log::error('Failed to get restorable backups', [
                 'error' => $e->getMessage(),
@@ -434,7 +429,7 @@ class BackupService
 
             return [
                 'success' => false,
-                'error' => 'バックアップ一覧の取得に失敗しました: '.$e->getMessage(),
+                'error' => 'バックアップ一覧の取得に失敗しました: ' . $e->getMessage(),
             ];
         }
     }
@@ -473,7 +468,6 @@ class BackupService
             }
 
             return $info;
-
         } catch (Exception $e) {
             Log::error('Failed to get backup info', [
                 'backup_name' => $backupName,
@@ -575,7 +569,6 @@ class BackupService
                 'download_dir' => $downloadDir,
                 'files' => $downloadedFiles,
             ];
-
         } catch (Exception $e) {
             Log::error('Failed to download backup from Dropbox', [
                 'timestamp' => $timestamp,
@@ -662,7 +655,7 @@ class BackupService
                 $result = Process::run($command);
 
                 if (! $result->successful()) {
-                    throw new Exception('データベースの復元に失敗しました: '.$result->errorOutput());
+                    throw new Exception('データベースの復元に失敗しました: ' . $result->errorOutput());
                 }
             } else {
                 throw new Exception('MySQL以外のデータベースの復元は現在サポートされていません');
@@ -678,7 +671,6 @@ class BackupService
                 'message' => 'データベースの復元が完了しました',
                 'pre_restore_backup' => $createBackupFirst ? $preRestoreBackup : null,
             ];
-
         } catch (Exception $e) {
             Log::error('Database restore failed', [
                 'sql_file' => $sqlFilePath,
@@ -727,13 +719,13 @@ class BackupService
                 throw new Exception("バックアップファイルが見つかりません: {$zipFilePath}");
             }
 
-            $zip = new ZipArchive;
+            $zip = new ZipArchive();
             if ($zip->open($zipFilePath) !== true) {
                 throw new Exception("ZIPファイルを開けません: {$zipFilePath}");
             }
 
             // 一時展開先
-            $tempExtractDir = storage_path('app/temp_restore_'.time());
+            $tempExtractDir = storage_path('app/temp_restore_' . time());
             File::makeDirectory($tempExtractDir, 0755, true);
 
             // ZIPを展開
@@ -788,7 +780,6 @@ class BackupService
                 'restored_paths' => $restoredPaths,
                 'thumbnail_regeneration' => $thumbnailResult,
             ];
-
         } catch (Exception $e) {
             Log::error('File restore failed', [
                 'zip_file' => $zipFilePath,
@@ -992,7 +983,6 @@ class BackupService
                 'total_books' => count($regenerated['books']),
                 'total_errors' => count($regenerated['errors']),
             ];
-
         } catch (Exception $e) {
             Log::error('Thumbnail regeneration failed', [
                 'error' => $e->getMessage(),
@@ -1155,7 +1145,6 @@ class BackupService
             ]);
 
             return $result;
-
         } catch (Exception $e) {
             Log::error('Backup cleanup failed', [
                 'error' => $e->getMessage(),
@@ -1231,7 +1220,6 @@ class BackupService
                 'target_url' => $currentAppUrl,
                 'updates' => $updates,
             ];
-
         } catch (Exception $e) {
             Log::error('Auto URL update failed', [
                 'error' => $e->getMessage(),

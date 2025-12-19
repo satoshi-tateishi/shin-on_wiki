@@ -60,4 +60,7 @@ return [
     'groups_claim' => env('OIDC_GROUPS_CLAIM', 'groups'),
     // When syncing groups, remove any groups that no longer match. Otherwise, sync only adds new groups.
     'remove_from_groups' => env('OIDC_REMOVE_FROM_GROUPS', false),
+
+    // LINE WORKS domain for SSO authentication
+    'lineworks_domain' => env('LINEWORKS_DOMAIN', null),
 ];

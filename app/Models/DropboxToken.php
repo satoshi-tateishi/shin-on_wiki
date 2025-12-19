@@ -5,6 +5,20 @@ namespace BookStack\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $service_name
+ * @property string|null $access_token
+ * @property Carbon|null $access_token_expires_at
+ * @property string|null $refresh_token
+ * @property string|null $account_id
+ * @property string|null $account_name
+ * @property string|null $scope
+ * @property bool $is_active
+ * @property Carbon|null $last_refreshed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class DropboxToken extends Model
 {
     protected $fillable = [
