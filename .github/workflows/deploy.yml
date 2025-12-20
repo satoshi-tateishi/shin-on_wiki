@@ -157,6 +157,18 @@ jobs:
             # ログファイルの権限修正（マイグレーションでrootが作成した場合に対応）
             docker compose -f docker-compose.production.yml exec -T app chown -R www-data:www-data storage/logs/
 
+            # セキュリティ設定: 秘密鍵のパーミッション
+            docker compose -f docker-compose.production.yml exec -T app sh -c '
+              if [ -f storage/app/lineworks/private_key.pem ]; then
+                chown www-data:www-data storage/app/lineworks/private_key.pem
+                chmod 600 storage/app/lineworks/private_key.pem
+                echo "✓ private_key.pem permission set to 600"
+              fi
+            '
+
+            # セキュリティ設定: .envファイルのパーミッション
+            chmod 600 ${{ secrets.DEPLOY_PATH }}/.env
+
             # キャッシュクリア
             docker compose -f docker-compose.production.yml exec -T app php artisan config:clear
             docker compose -f docker-compose.production.yml exec -T app php artisan cache:clear

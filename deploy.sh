@@ -328,6 +328,13 @@ set_permissions() {
     # .envファイルを保護
     sudo chmod 600 "${APP_DIR}/.env"
 
+    # LINE WORKS秘密鍵を保護
+    if [ -f "${APP_DIR}/storage/app/lineworks/private_key.pem" ]; then
+        sudo chown ${WEB_USER}:${WEB_USER} "${APP_DIR}/storage/app/lineworks/private_key.pem"
+        sudo chmod 600 "${APP_DIR}/storage/app/lineworks/private_key.pem"
+        print_success "LINE WORKS秘密鍵のパーミッションを設定しました"
+    fi
+
     print_success "パーミッションを設定しました"
     echo ""
 }
