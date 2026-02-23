@@ -158,3 +158,5 @@ docker compose -f docker-compose.production.yml exec app php artisan view:cache
 **最終更新**: 2025年11月27日 | **作成者**: Claude Code + satoshi
 
 > 📖 BookStackオリジナルREADMEは [README_BOOKSTACK_ORIGINAL.md](./README_BOOKSTACK_ORIGINAL.md)
+
+2026年2月23日 LWアプリの設定を修正
