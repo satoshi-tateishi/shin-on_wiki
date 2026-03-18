@@ -118,6 +118,10 @@ services:
       db:
         condition: service_healthy
 
+    networks:
+      - default
+      - shin-on-internal   # apache-gateway からのリバースプロキシを受け付けるために追加
+
     # リソース制限（必要に応じて調整）
     deploy:
       resources:
@@ -141,6 +145,8 @@ services:
 networks:
   default:
     name: ${COMPOSE_PROJECT_NAME:-shin-on_wiki}_network
+  shin-on-internal:
+    external: true   # docker network create shin-on-internal で事前作成が必要
 
 # ==============================================================
 # 使用例
