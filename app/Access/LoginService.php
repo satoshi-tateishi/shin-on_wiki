@@ -2,7 +2,6 @@
 
 namespace BookStack\Access;
 
-use BookStack\Access\LineWorksOtp\LineWorksOtpSession;
 use BookStack\Access\Mfa\MfaSession;
 use BookStack\Activity\ActivityType;
 use BookStack\Exceptions\LoginAttemptException;
@@ -23,7 +22,6 @@ class LoginService
         protected MfaSession $mfaSession,
         protected EmailConfirmationService $emailConfirmationService,
         protected SocialDriverManager $socialDriverManager,
-        protected LineWorksOtpSession $lineWorksOtpSession,
     ) {
     }
 
@@ -41,7 +39,7 @@ class LoginService
             throw new LoginAttemptInvalidUserException('Login not allowed for guest user');
         }
 
-        if ($this->awaitingEmailConfirmation($user) || $this->needsMfaVerification($user) || $this->needsLineWorksOtpVerification($user)) {
+        if ($this->awaitingEmailConfirmation($user) || $this->needsMfaVerification($user)) {
             $this->setLastLoginAttemptedForUser($user, $method, $remember);
 
             throw new StoppedAuthenticationException($user, $this);
@@ -119,9 +117,6 @@ class LoginService
      */
     protected function setLastLoginAttemptedForUser(User $user, string $method, bool $remember): void
     {
-        // Clear any existing LINE WORKS OTP sent session key for a fresh login attempt
-        session()->forget('lineworks-otp-sent:' . $user->id);
-
         session()->put(
             self::LAST_LOGIN_ATTEMPTED_SESSION_KEY,
             implode(':', [$user->id, $method, $remember, time()])
@@ -142,14 +137,6 @@ class LoginService
     public function needsMfaVerification(User $user): bool
     {
         return !$this->mfaSession->isVerifiedForUser($user) && $this->mfaSession->isRequiredForUser($user);
-    }
-
-    /**
-     * Check if LINE WORKS OTP verification is needed.
-     */
-    public function needsLineWorksOtpVerification(User $user): bool
-    {
-        return !$this->lineWorksOtpSession->isVerifiedForUser($user) && $this->lineWorksOtpSession->isRequiredForUser($user);
     }
 
     /**
@@ -216,11 +203,6 @@ class LoginService
         auth()->logout();
         session()->invalidate();
         session()->regenerateToken();
-
-        // Clear LINE WORKS OTP session keys if user was logged in
-        if ($user) {
-            session()->forget('lineworks-otp-sent:' . $user->id);
-        }
 
         return $this->shouldAutoInitiate() ? '/login?prevent_auto_init=true' : '/';
     }

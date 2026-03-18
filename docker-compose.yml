@@ -14,6 +14,12 @@ services:
       MYSQL_USER: bookstack
       MYSQL_PASSWORD: bookstack
       MYSQL_RANDOM_ROOT_PASSWORD: 'true'
+    command: >
+      mysqld
+      --innodb-buffer-pool-size=128M
+      --innodb-log-file-size=32M
+      --max-connections=50
+      --performance-schema=OFF
     volumes:
       - ./dev/docker/init.db:/docker-entrypoint-initdb.d
       - db:/var/lib/mysql

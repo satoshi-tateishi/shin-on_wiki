@@ -22,7 +22,7 @@ class LoginController extends Controller
     ) {
         $this->middleware('guest', ['only' => ['getLogin', 'login']]);
         $this->middleware('guard:standard,ldap', ['only' => ['login']]);
-        $this->middleware('guard:standard,ldap,oidc', ['only' => ['logout']]);
+        $this->middleware('guard:standard,ldap,oidc,portal_jwt', ['only' => ['logout']]);
     }
 
     /**
@@ -30,6 +30,11 @@ class LoginController extends Controller
      */
     public function getLogin(Request $request)
     {
+        if (config('auth.method') === 'portal_jwt') {
+            $loginUrl = config('portal_jwt.login_url');
+            return redirect($loginUrl . '?next=' . urlencode(url('/')));
+        }
+
         $socialDrivers = $this->socialDriverManager->getActive();
         $authMethod = config('auth.method');
         $preventInitiation = $request->get('prevent_auto_init') === 'true';
@@ -95,6 +100,12 @@ class LoginController extends Controller
      */
     public function logout()
     {
+        if (config('auth.method') === 'portal_jwt') {
+            $this->loginService->logout();
+            return redirect(config('portal_jwt.logout_url'))
+                ->withCookie(cookie()->forget('portal_jwt'));
+        }
+
         return redirect($this->loginService->logout());
     }
 

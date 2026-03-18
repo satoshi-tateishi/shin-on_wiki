@@ -31,10 +31,6 @@ class StoppedAuthenticationException extends \Exception implements Responsable
             $redirect = '/mfa/verify';
         }
 
-        if ($this->loginService->needsLineWorksOtpVerification($this->user)) {
-            $redirect = '/lineworks-otp/verify';
-        }
-
         return redirect($redirect);
     }
 

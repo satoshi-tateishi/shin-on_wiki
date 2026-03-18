@@ -32,6 +32,13 @@ services:
     # ports:
     #   - '3306:3306'
 
+    command: >
+      mysqld
+      --innodb-buffer-pool-size=128M
+      --innodb-log-file-size=32M
+      --max-connections=50
+      --performance-schema=OFF
+
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-shin_on_wiki}
       MYSQL_USER: ${DB_USERNAME:-bookstack}
@@ -54,10 +61,10 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 1G
+          memory: 256M
         reservations:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '0.25'
+          memory: 128M
 
   # ==============================================================
   # アプリケーション (BookStack)

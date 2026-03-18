@@ -343,12 +343,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/mfa/backup_codes/verify', [AccessControllers\MfaBackupCodesController::class, 'verify']);
 });
 
-// LINE WORKS OTP routes
-Route::middleware('guest')->group(function () {
-    Route::get('/lineworks-otp/verify', [AccessControllers\LineWorksOtpController::class, 'verify']);
-    Route::post('/lineworks-otp/verify', [AccessControllers\LineWorksOtpController::class, 'verifySubmit']);
-    Route::post('/lineworks-otp/resend', [AccessControllers\LineWorksOtpController::class, 'resend']);
-});
 Route::delete('/mfa/{method}/remove', [AccessControllers\MfaController::class, 'remove'])->middleware('auth');
 
 // Social auth routes

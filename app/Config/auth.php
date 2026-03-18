@@ -10,7 +10,7 @@
 
 return [
 
-    // Options: standard, ldap, saml2, oidc
+    // Options: standard, ldap, saml2, oidc, portal_jwt
     'method' => env('AUTH_METHOD', 'standard'),
 
     // Automatically initiate login via external auth system if it's the sole auth method.
@@ -44,6 +44,10 @@ return [
             'provider' => 'external',
         ],
         'oidc' => [
+            'driver'   => 'async-external-session',
+            'provider' => 'external',
+        ],
+        'portal_jwt' => [
             'driver'   => 'async-external-session',
             'provider' => 'external',
         ],

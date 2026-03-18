@@ -1,5 +1,15 @@
 @include('layouts.parts.header-links-start')
 
+@if(config('auth.method') === 'portal_jwt')
+    @php
+        $portalLoginUrl = config('portal_jwt.login_url', 'http://localhost/login/');
+        $portalParts = parse_url($portalLoginUrl);
+        $portalBaseUrl = $portalParts['scheme'] . '://' . $portalParts['host']
+            . (isset($portalParts['port']) ? ':' . $portalParts['port'] : '') . '/';
+    @endphp
+    <a href="{{ $portalBaseUrl }}" title="shin•on Portal">@icon('home')shin•on Portal</a>
+@endif
+
 @if (user()->hasAppAccess())
     <a class="hide-over-l" href="{{ url('/search') }}">@icon('search'){{ trans('common.search') }}</a>
     @if(userCanOnAny(\BookStack\Permissions\Permission::View, \BookStack\Entities\Models\Bookshelf::class) || userCan(\BookStack\Permissions\Permission::BookshelfViewAll) || userCan(\BookStack\Permissions\Permission::BookshelfViewOwn))
