@@ -8,6 +8,7 @@ use BookStack\Http\HttpRequestService;
 use BookStack\Users\Models\User;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
+use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -118,7 +119,7 @@ class PortalJwtService
 
             try {
                 $client = $this->http->buildClient(5);
-                $response = $client->request('GET', $jwksUrl);
+                $response = $client->sendRequest(new Request('GET', $jwksUrl));
                 return json_decode($response->getBody()->getContents(), true);
             } catch (\Exception $e) {
                 throw new PortalJwtException('Failed to fetch JWKS from portal: ' . $e->getMessage());
