@@ -443,9 +443,9 @@ PORTAL_JWT_COOKIE=portal_jwt
 Portal をローカルで動かしている場合は、Docker ネットワーク経由に変更します。
 
 ```env
-PORTAL_JWKS_URL=http://host.docker.internal/api/jwks/
-PORTAL_LOGIN_URL=http://localhost/login/
-PORTAL_LOGOUT_URL=http://localhost/logout/
+PORTAL_JWKS_URL=http://portal-app:8000/api/jwks/
+PORTAL_LOGIN_URL=http://localhost:8000/login/
+PORTAL_LOGOUT_URL=http://localhost:8000/logout/
 ```
 
 ---

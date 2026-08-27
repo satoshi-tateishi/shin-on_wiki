@@ -123,8 +123,8 @@ PORTAL_LOGIN_URL=https://portal.shin-on1981.com/login/
 PORTAL_LOGOUT_URL=https://portal.shin-on1981.com/logout/
 
 # 開発環境用 (Dockerネットワーク経由)
-# PORTAL_JWKS_URL=http://host.docker.internal/api/jwks/
-# PORTAL_LOGIN_URL=http://localhost/login/
+# PORTAL_JWKS_URL=http://portal-app:8000/api/jwks/
+# PORTAL_LOGIN_URL=http://localhost:8000/login/
 ```
 
 ### JWT クレーム

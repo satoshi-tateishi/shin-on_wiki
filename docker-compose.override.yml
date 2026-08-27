@@ -1,0 +1,9 @@
+services:
+  app:
+    networks:
+      - default
+      - shin-on-internal
+
+networks:
+  shin-on-internal:
+    external: true

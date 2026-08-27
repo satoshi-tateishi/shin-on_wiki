@@ -2,7 +2,7 @@
 
 @if(config('auth.method') === 'portal_jwt')
     @php
-        $portalLoginUrl = config('portal_jwt.login_url', 'http://localhost/login/');
+        $portalLoginUrl = config('portal_jwt.login_url', 'http://localhost:8000/login/');
         $portalParts = parse_url($portalLoginUrl);
         $portalBaseUrl = $portalParts['scheme'] . '://' . $portalParts['host']
             . (isset($portalParts['port']) ? ':' . $portalParts['port'] : '') . '/';
