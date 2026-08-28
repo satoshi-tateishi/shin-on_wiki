@@ -148,8 +148,8 @@ jobs:
             # ビルド後、開発用依存関係を削除
             npm prune --omit=dev
 
-            # Dockerコンテナを再起動（PHPコードの変更を反映）
-            docker compose -f docker-compose.production.yml restart app
+            # Compose設定（ネットワークalias・healthcheckを含む）とPHPコードを反映
+            docker compose -f docker-compose.production.yml up -d --force-recreate app
 
             # データベースマイグレーション
             docker compose -f docker-compose.production.yml exec -T app php artisan migrate --force || true
