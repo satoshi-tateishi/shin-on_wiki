@@ -11,6 +11,12 @@ use Mockery;
 
 class StatusTest extends TestCase
 {
+    public function test_healthcheck_returns_empty_204_response()
+    {
+        $resp = $this->get('/healthz');
+        $resp->assertNoContent();
+    }
+
     public function test_returns_json_with_expected_results()
     {
         $resp = $this->get('/status');

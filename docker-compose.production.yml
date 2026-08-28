@@ -118,6 +118,13 @@ services:
       db:
         condition: service_healthy
 
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --fail --silent --output /dev/null http://127.0.0.1/healthz || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
     networks:
       - default
       - shin-on-internal   # apache-gateway からのリバースプロキシを受け付けるために追加

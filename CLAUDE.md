@@ -171,6 +171,9 @@ Portal JWT の認証テストは `tests/Auth/` に追加すること。
 - デプロイ内容: git pull → composer install → npm production build → Docker再起動 → migrate
 - 詳細: `claude/docs/DEPLOYMENT.md`, `.github/workflows/deploy.yml`
 
+Webコンテナの軽量な応答確認には、認証不要で本文なしの204を返す `GET /healthz` を使用する。
+DB・キャッシュ・セッションまで含む既存の `GET /status` とは用途を分ける。
+
 ## Dropbox バックアップ
 
 毎日午前2時 (Asia/Tokyo) に自動バックアップ。保持期間: 30日。

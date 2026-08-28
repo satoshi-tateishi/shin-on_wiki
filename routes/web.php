@@ -22,6 +22,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 // Status & Meta routes
+Route::get('/healthz', [SettingControllers\StatusController::class, 'health'])->withoutMiddleware([
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    VerifyCsrfToken::class,
+]);
 Route::get('/status', [SettingControllers\StatusController::class, 'show']);
 Route::get('/robots.txt', [MetaController::class, 'robots']);
 Route::get('/favicon.ico', [MetaController::class, 'favicon']);

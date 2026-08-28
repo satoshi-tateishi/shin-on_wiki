@@ -11,6 +11,14 @@ use Illuminate\Support\Str;
 class StatusController extends Controller
 {
     /**
+     * Return an empty response when the web application process is reachable.
+     */
+    public function health()
+    {
+        return response('', 204);
+    }
+
+    /**
      * Show the system status as a simple json page.
      */
     public function show()
